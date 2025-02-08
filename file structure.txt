@@ -1,0 +1,53 @@
+better-bowls/
+├── src/
+│   ├── app/
+│   │   ├── layout.tsx
+│   │   ├── page.tsx
+│   │   ├── about/page.tsx
+│   │   ├── order/page.tsx
+│   │   ├── checkout/page.tsx
+│   ├── components/
+│   │   ├── layout/
+│   │   │   ├── Header.tsx
+│   │   │   ├── Footer.tsx
+│   │   │   └── Navigation.tsx
+│   │   ├── home/
+│   │   │   ├── Hero.tsx
+│   │   │   ├── LocationCard.tsx
+│   │   │   ├── Benefits.tsx
+│   │   │   ├── AboutPreview.tsx
+│   │   │   └── ImageSlideshow.tsx
+│   │   ├── order/
+│   │   │   ├── CustomerForm.tsx
+│   │   │   ├── ProductCustomization.tsx
+│   │   │   ├── SizeSelector.tsx
+│   │   │   ├── ClassSelector.tsx
+│   │   │   └── ToppingsCustomizer.tsx
+│   │   ├── checkout/
+│   │   │   ├── OrderSummary.tsx
+│   │   │   ├── PaymentButton.tsx
+│   │   │   ├── PromoCode.tsx
+│   │   │   └── PickupDetails.tsx
+│   │   └── ui/
+│   │       ├── Button.tsx
+│   │       ├── Input.tsx
+│   │       └── Card.tsx
+│   ├── lib/
+│   │   ├── constants.ts
+│   │   │   ├── menu.ts
+│   │   │   ├── locations.ts
+│   │   │   └── customization.ts
+│   │   ├── types.ts
+│   │   ├── utils.ts
+│   │   └── api/
+│   │       ├── airtable.ts
+│   │       └── stripe.ts
+│   ├── styles/
+│   │   └── globals.css
+├── public/
+│   ├── images/
+│   │   ├── logo.svg
+│   │   ├── bowl.svg
+│   │   ├── benefits/
+│   │   └── menu/
+└── package.json

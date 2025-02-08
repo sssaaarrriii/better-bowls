@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-beige text-green-900;
+  }
+}
+
+@layer components {
+  .heading-1 {
+    @apply text-4xl font-serif;
+  }
+
+  .heading-2 {
+    @apply text-3xl font-serif;
+  }
+
+  .body-text {
+    @apply text-lg font-sans;
+  }
+}

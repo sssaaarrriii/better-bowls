@@ -1,0 +1,185 @@
+Better Bowls Website Spec
+Better Bowls
+About Better Bowls
+Better Bowls is the most delicious way to hit your protein goal. We make high protein yogurt bowls that are nutritious and delicious. Each Better Bowl features our premium blend of greek yogurt and whey protein which is topped with fresh fruit like strawberries, bananas, blueberries and superfood toppings such as chia seeds and hemp hearts. The medium size bowl features 40g of protein and the large bowl features 60g of high quality and easy to digest protein. Better Bowls is the perfect post workout meal, a filling breakfast, or a lunch time protein packed option. Better Bowls are made to order and the website described in this document will allow customers to make customizations to their bowl, place an order for pickup, and checkout online with their preferred payment option.
+
+About me
+Hey! My name is Sari and I wanted to share a little bit about the story behind Better Bowls.
+
+I started going to the gym nearly 10 years ago and I started working out more seriously about 5 years ago. As I was pushing myself at the gym, I started feeling more tired and fatigued in my day to day life. On top of that, my progress started to plateau and I was feeling frustrated, but I wasn’t sure why. After many conversations with gym friends and a consultation with a nutritionist, I found out that I was severely undereating protein.
+
+But it was very difficult to consume the recommended 150g of protein per day. That would involve eating 1-2 pounds of meat. Every single day.
+
+After looking at high protein alternatives I found out that Greek Yogurt is very high in protein and has many other health benefits such as probiotics which improve gut health. I went on to experiment with dozens of protein powders to create the perfect recipe that involves a creamy and delicious organic greek yogurt base mixed with highly purified whey protein for smoother blending and no after taste. That’s how Better Bowls was born! We make it easier to get 40-60g of protein in one delicious bowl.
+Design Principles
+Use white background where shown in the design mocks attached
+Typography
+Header: Recoleta Regular
+Sub header: Myriad Variable
+Body: Baskerville
+Color palette
+Primary colors: 
+Reseda green (#5E7153)
+Sage (#A8B589)
+Secondary colors:
+Beige (#FCFCE4)
+Dutch white (#F9ECC9)
+Product Principles
+Mobile first
+The website will be primarily access on mobile and should be responsive and fast
+It should be possible to order a bowl for pickup in 10 seconds (without making customizations). It should be a very simple flow with 3-4 screens and it should not require login or creating an account, that’s just annoying for users
+Visual and appetizing
+The site should include beautiful visuals including product photos that are appetizing
+Premium and sleek
+The site should feel elevated to communicate the premium price point while still being modern, sleek, and visually appealing/appetizing
+Informational
+The product details page should clearly explain the product, communicate allergy restrictions, explain the benefit of better bowls, communicate the uniqueness of our greek yogurt and protein blend
+Website
+Format / Layout / Structure
+The website should include the following pages:
+Home page
+A collection of components from different pages arranged in a feed 
+About us
+Includes an image and text that shares the founder story
+Order details
+Includes a few components that prompt the user for their name, phone number, and the class they are attending. Use these as input sources to create an order entry
+Product details
+Displays the Better Bowl available for purchase and include components that allow for size selection, topping customization, and informational cards that include images and text 
+Checkout
+Includes components that summarize the order details, product selected, pickup location and time, payment method, and a checkout button
+Homepage
+				
+The home page includes the following components and features from top to bottom
+Header with Better Bowls logo centered and a sandwich icon that is right aligned which allows users to expand and see all of the site pages (about us, locations, etc)
+Clicking the better bowls logo header at the top of the screen should link to the home page (this page) which essentially means refreshing/reloading the page
+Slideshow of product images that rotate every 5 seconds with text under the images that says “The most delicious way to hit your protein goals”
+Set of location cards showing upcoming pickup spots with the gym name, date and time, address, and a large centered button that allows customers to order for pickup
+Currently hard code the “order now for pickup” and “pre-order for pickup”
+In the future, if the current date and time match the date/time listed for an event, show the order now for the pickup button. Otherwise allow pre-ordering and have the location below the coming up banner
+Address for each location should be hyperlinked to open google/apple maps
+Component that captures the “benefits of better bowls” and “about our protein yogurt blend” using a combination of text and images an image with a button that directs to the “about us” page
+About us component
+Includes image of me and a snippet from the about us text
+Includes button that directs to the “about us” page
+Start order
+
+After clicking a location card, the user should be able to place a pickup order as follows:
+User should enter name and phone number
+Will be used for order pickup
+Text confirmation will be sent when order is placed and when order is ready for pickup
+Both required fields, have validation check
+Allow users to select their Pvolve class from a pre-set dropdown list
+Require a selection before the “next” button becomes clickable
+Currently hardcode the following drop down list:
+8AM Strength and Sculpt (Nat)
+9:30AM Sculpt and Burn (Nat)
+11AM Strength and Sculpt (Nat)
+12PM Strength and Sculpt (Barney)
+1PM Strength and Sculpt (Barney)
+Product selection
+		
+
+Functionality:
+Display main product photo and add 4 more image slots for user to see more images
+User should be able to scroll down to see more information about the benefits of Better Bowls and to learn more about the protein yogurt blend
+Users should be able to make selections between regular and large bowls. A selection is required before continuing to place an order
+Users can click the customize button which expand the customizable ingredients (designs and behavior found on next screen)
+Users should be able to click “see more nutrition facts” to open a pop-up with full macros
+Right now allocate space for an image placeholder
+
+Customize
+		
+
+Functionality:
+Require size selection between regular and large before opening customize menu
+Trigger small red error message under the customize button if a user tries to click the button without having a size selected
+Default portions are pre-populated according to size selected and the below tables (use the default column)
+The addition/subtraction will allow in the form of min/max values
+Allow free form text box to let customers make any customizations by text
+
+Regular bowl
+
+
+
+Default for regular
+Min
+Max
+Organic chia seeds
+1 tsp (35 calories)
+None
+2 tsp (70 calories)
+Organic gluten-free granola
+1 tsp (35 calories)
+None
+2 tsp (70 calories)
+Organic coconut shreds
+1/2 tsp  (20 calories)
+None
+1 tsp (40 calories)
+Organic honey
+1/2 tsp (20 calories)
+None
+1 tsp (40 calories)
+
+
+Large bowl
+
+
+
+Default for regular
+Min
+Max
+Chia seeds
+1 tbsp 10g 
+(50 calories)
+None
+2 tbsp 20g 
+(100 calories)
+Granola
+1 tbsp 12g 
+(55 calories)
+None
+2 tbsp 24g 
+(110 calories)
+Coconut shreds
+1/2 tbsp  (30 calories)
+None
+1 tsp (60 calories)
+Honey
+1/2 tbsp (30 calories)
+None
+1 tbsp (60 calories)
+
+
+Checkout
+
+
+Functionality:
+Summarize order details which include the order name, phone number, and product selection. Include the size of the bowl and any customizations
+Customer needs to confirm these details and they will also be sent to the kitchen to make the bowl as customer request
+Allow customers to enter a promo code in a free form text box. There should be an enter button to click after entering promo code
+Generate a success response if promo code matches promo codes in database and apply as discount to order total (pre tax)
+Generate a small red text to the right of the promo code box that reads “sorry invalid promo code” if the promo code does not match the entry in the database
+Confirm pickup details and make pickup time at the end of class
+Hardcode time to 8:45AM for now
+Default payment method should be Apple Pay if the user is on iOS, or Google Pay if users are on Android. It should be seamless to pay
+In the meantime I want to test the user flow so hard code the price of the item at $0.01
+After payment is confirmed, send an Airtable request to log a row in the database with the following format
+Format
+Customer name (text)
+Customer phone number (number)
+Product name (text)
+Customizations (text)
+Macros (string with numbers)
+Date and time stamp when order received (date and time)
+Payment response (approved, declined, error)
+Example
+Sari
+6506960570
+Classic Energy Bowl (regular)
+No honey
+40g Protein, 380 Calories
+1/22/2025 11:30AM
+Approved
+
+
