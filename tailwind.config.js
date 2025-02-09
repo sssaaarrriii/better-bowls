@@ -8,7 +8,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'green-900': '#5E7153',
+        'reseda-green': '#5E7153',
         'sage': '#A8B589',
         'beige': '#FCFCE4',
         'dutch-white': '#F9ECC9',
@@ -17,8 +17,8 @@ module.exports = {
         }
       },
       fontFamily: {
-        header: ['var(--font-header)'],
-        body: ['var(--font-body)'],
+        header: ['var(--font-header)', 'serif'],
+        body: ['var(--font-body)', 'serif']
       },
     },
   },

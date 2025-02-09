@@ -2,15 +2,14 @@ import React from "react";
 import "../styles/globals.css";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
-import { Fraunces, Mulish } from 'next/font/google'
+import localFont from 'next/font/local'
+import { Mulish } from 'next/font/google'
 
-// Temporary substitute for Recoleta
-const fraunces = Fraunces({ 
-  subsets: ['latin'],
-  variable: '--font-header',
+const recoleta = localFont({
+  src: '../../public/fonts/Recoleta-RegularDEMO.otf',
+  variable: '--font-header'
 })
 
-// Temporary substitute for Myriad/Baskerville
 const mulish = Mulish({
   subsets: ['latin'],
   variable: '--font-body',
@@ -21,12 +20,12 @@ const mulish = Mulish({
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${mulish.variable}`}>
+    <html lang="en" className={`${recoleta.variable} ${mulish.variable}`}>
       <head>
         {/* Remove this line as it's not needed */}
         {/* <link rel="stylesheet" href={fraunces.style.fontDisplay} /> */}
       </head>
-      <body className={`${mulish.className}`}>
+      <body className={mulish.className}>
         <Header />
         <main>{children}</main>
         <Footer />

@@ -10,7 +10,15 @@ const CLASS_TIMES = [
   { id: '11am', label: '11AM Strength and Sculpt (Nat)' },
 ]
 
-export default function OrderForm() {
+interface OrderFormProps {
+  onSubmit: (data: {
+    name: string
+    phone: string
+    classTime: string
+  }) => void
+}
+
+export default function OrderForm({ onSubmit }: OrderFormProps) {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -19,8 +27,7 @@ export default function OrderForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Form submitted:', formData)
-    // Add your submission logic here
+    onSubmit(formData)
   }
 
   return (

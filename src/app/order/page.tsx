@@ -1,11 +1,5 @@
-'use client'
+import OrderPage from '@/components/order/OrderPage'
 
-import OrderForm from '../../components/order/OrderForm'
-
-export default function OrderPage() {
-  return (
-    <div className="bg-[#FCFCE4] min-h-screen">
-      <OrderForm />
-    </div>
-  )
+export default function Page() {
+  return <OrderPage />
 }
