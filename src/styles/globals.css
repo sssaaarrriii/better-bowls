@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom styles can go here */
+:root {
+  --font-header: var(--font-fraunces);
+  --font-body: var(--font-mulish);
+}
+
 @layer base {
   body {
     @apply bg-beige text-green-900;
@@ -10,14 +16,14 @@
 
 @layer components {
   .heading-1 {
-    @apply text-4xl font-serif;
+    @apply text-4xl font-header;
   }
 
   .heading-2 {
-    @apply text-3xl font-serif;
+    @apply text-3xl font-header;
   }
 
   .body-text {
-    @apply text-lg font-sans;
+    @apply text-lg font-body;
   }
 }
