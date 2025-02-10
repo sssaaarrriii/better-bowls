@@ -9,3 +9,15 @@ Ask clarifying questions to the user.
 Follow design guidelines in #BetterBowlsWebsiteSpec.txt
 
 All imports to use lowercase consistently.
+
+Use PascalCase for Components ✅
+components/OrderSummary.tsx
+components/Button.tsx
+components/Navbar.tsx
+Use kebab-case for Pages & Routes ✅
+pages/index.tsx → /
+pages/order-summary.tsx → /order-summary
+pages/about.tsx → /about
+Use kebab-case for Static Files ✅
+public/images/homepage-banner.jpg
+public/styles/global.css

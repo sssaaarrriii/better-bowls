@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
-import { Link } from "react-router-dom";
+import Link from 'next/link'
 
 interface NavigationCardProps {
   title?: string;
@@ -18,7 +18,7 @@ const NavigationCard = ({
     <CardContent className="p-0">
       <div className="relative">
         <img src={imageSrc} alt={title} className="w-full h-48 object-cover" />
-        <Link to={linkTo}>
+        <Link href={linkTo}>
           <Button
             className="absolute bottom-4 left-1/2 transform -translate-x-1/2 
                        bg-white text-black hover:bg-gray-100 font-semibold

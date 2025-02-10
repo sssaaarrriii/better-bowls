@@ -1,8 +1,8 @@
 'use client'
 
 import Image from 'next/image'
-import { Card } from '../ui/Card'
-import Button from '../ui/Button'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 
 const BENEFITS = [
   {

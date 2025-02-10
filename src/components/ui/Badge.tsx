@@ -1,5 +1,5 @@
 import { HTMLAttributes } from 'react'
-import clsx from 'clsx'
+import { cn } from "@/lib/utils"
 
 interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
   variant?: 'default' | 'success' | 'warning' | 'error'
@@ -13,7 +13,7 @@ export function Badge({
 }: BadgeProps) {
   return (
     <span
-      className={clsx(
+      className={cn(
         'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
         {
           'bg-green-100 text-green-800': variant === 'default' || variant === 'success',
