@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { Button } from '../ui/Button'
 import { Slideshow } from '../ui/Slideshow'
 import { useRouter } from 'next/navigation'
 
@@ -29,6 +28,10 @@ export default function ProductCustomization() {
   const [extraNotes, setExtraNotes] = useState('')
   const router = useRouter()
 
+  const customerInfo = typeof window !== 'undefined' 
+    ? JSON.parse(localStorage.getItem('customerInfo') || '{}')
+    : {}
+
   const handleToppingChange = (toppingName: string, change: number) => {
     setToppingAmounts(prev => {
       const newAmount = (prev[toppingName] || 0) + change
@@ -39,10 +42,13 @@ export default function ProductCustomization() {
 
   const handleOrder = () => {
     const orderDetails = {
+      customerInfo,
       items: [{
         name: 'Classic Energy Bowl',
-        quantity: 1,
-        price: BOWL_SIZES[selectedSize].price
+        size: selectedSize,
+        price: BOWL_SIZES[selectedSize].price,
+        toppings: toppingAmounts,
+        notes: extraNotes
       }],
       subtotal: BOWL_SIZES[selectedSize].price,
       discount: 0,
@@ -51,7 +57,6 @@ export default function ProductCustomization() {
     }
     
     localStorage.setItem('currentOrder', JSON.stringify(orderDetails))
-    console.log('Navigating to checkout...');
     router.push('/checkout')
   }
 

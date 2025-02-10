@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import OrderSummary from '../../components/checkout/OrderSummary'
-import PromoCode from '../../components/checkout/PromoCode'
-import PickupDetails from '../../components/checkout/PickupDetails'
-import { Card } from '../../components/ui/Card'
-import { Button } from '../../components/ui/Button'
 import { loadStripe } from '@stripe/stripe-js'
+import OrderSummary from '@/components/checkout/order-summary'
+import PromoCode from '@/components/checkout/promo-code'
+import PickupDetails from '@/components/checkout/pickup-details'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 
 interface OrderDetails {
   items: {

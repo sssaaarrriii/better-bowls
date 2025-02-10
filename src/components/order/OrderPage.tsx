@@ -17,6 +17,7 @@ OrderForm.tsx:
 */
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import OrderForm from './OrderForm'
 import BowlSelection from './BowlSelection'
 
@@ -29,16 +30,33 @@ interface CustomerInfo {
 export default function OrderPage() {
   const [step, setStep] = useState<'customer-info' | 'bowl-selection'>('customer-info')
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const router = useRouter()
 
-  const handleCustomerSubmit = (data: CustomerInfo) => {
-    setCustomerInfo(data)
-    setStep('bowl-selection')
+  const handleCustomerSubmit = async (data: CustomerInfo) => {
+    if (isSubmitting) return
+    
+    setIsSubmitting(true)
+    try {
+      // Store customer info in localStorage
+      localStorage.setItem('customerInfo', JSON.stringify(data))
+      
+      // Navigate to product customization instead of /customize
+      router.push('/order/customize')
+    } catch (error) {
+      console.error('Error submitting form:', error)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
     <div className="min-h-screen pt-32 bg-beige">
       {step === 'customer-info' ? (
-        <OrderForm onSubmit={handleCustomerSubmit} />
+        <OrderForm 
+          onSubmit={handleCustomerSubmit} 
+          isSubmitting={isSubmitting}
+        />
       ) : (
         <BowlSelection customerInfo={customerInfo} />
       )}

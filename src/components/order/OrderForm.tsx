@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { Input } from '../ui'
-import { RadioGroup } from '../ui'
 
 const CLASS_TIMES = [
   { id: '8am', label: '8AM Strength and Sculpt (Nat)' },
@@ -16,18 +15,25 @@ interface OrderFormProps {
     phone: string
     classTime: string
   }) => void
+  isSubmitting?: boolean
 }
 
-export default function OrderForm({ onSubmit }: OrderFormProps) {
+export default function OrderForm({ onSubmit, isSubmitting }: OrderFormProps) {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
     classTime: '',
   })
 
+  const isFormValid = formData.name.trim() !== '' && 
+                     formData.phone.trim() !== '' && 
+                     formData.classTime !== ''
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit(formData)
+    if (isFormValid && !isSubmitting) {
+      onSubmit(formData)
+    }
   }
 
   return (
@@ -66,19 +72,40 @@ export default function OrderForm({ onSubmit }: OrderFormProps) {
           We'll have your bowl ready after class!
         </p>
 
-        <RadioGroup
-          options={CLASS_TIMES}
-          value={formData.classTime}
-          onChange={(value) => setFormData({ ...formData, classTime: value })}
-          className="space-y-4"
-        />
+        <div className="space-y-3">
+          {CLASS_TIMES.map((time) => (
+            <button
+              key={time.id}
+              type="button"
+              onClick={() => setFormData({ ...formData, classTime: time.id })}
+              className={`
+                w-full py-4 px-6 rounded-xl text-lg font-header
+                transition-all duration-200
+                ${formData.classTime === time.id
+                  ? 'bg-[#5E7153] text-white shadow-md transform scale-[1.02]'
+                  : 'bg-white text-[#5E7153] border-2 border-[#5E7153] hover:bg-[#5E7153]/10'
+                }
+              `}
+            >
+              {time.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <button
         type="submit"
-        className="w-full py-4 px-8 text-2xl font-header text-[#5E7153] border-2 border-[#5E7153] rounded-full hover:bg-[#5E7153] hover:text-white transition-colors"
+        disabled={!isFormValid || isSubmitting}
+        className={`
+          w-full py-4 px-8 text-2xl font-header rounded-full
+          transition-all duration-200 transform
+          ${(!isFormValid || isSubmitting)
+            ? 'bg-gray-300 text-gray-500 cursor-not-allowed border-2 border-gray-300'
+            : 'text-[#5E7153] border-2 border-[#5E7153] hover:bg-[#5E7153] hover:text-white active:scale-[0.98] hover:shadow-md'
+          }
+        `}
       >
-        Next
+        {isSubmitting ? 'Processing...' : 'Next'}
       </button>
     </form>
   )

@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { LocationCard } from '@/components/ui/LocationCard'
+import { LocationCard } from '@/components/ui'
 // Keep the import but comment it out for now
 // import { Slideshow } from '../components/ui/Slideshow'
 
