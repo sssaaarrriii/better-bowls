@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { type Customer } from '../../lib/types'
-import Button from '../ui/Button'
+import { Button } from '@/components/ui/button'
 
 const CLASSES = [
   '8AM Strength and Sculpt (Nat)',

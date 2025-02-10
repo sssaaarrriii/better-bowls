@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Input } from '../ui'
+import { Input } from '@/components/ui/input'
 
 const CLASS_TIMES = [
   { id: '8am', label: '8AM Strength and Sculpt (Nat)' },
