@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom'
 import { render, screen, fireEvent } from '@testing-library/react'
-import Button from './Button'
+import { Button } from './button'
+import { describe, it, expect, vi } from 'vitest'
 
 describe('Button', () => {
   it('renders correctly', () => {
@@ -9,7 +10,7 @@ describe('Button', () => {
   })
 
   it('handles click events', () => {
-    const handleClick = jest.fn()
+    const handleClick = vi.fn()
     render(<Button onClick={handleClick}>Click me</Button>)
     fireEvent.click(screen.getByRole('button'))
     expect(handleClick).toHaveBeenCalledTimes(1)
@@ -25,4 +26,4 @@ describe('Button', () => {
     rerender(<Button variant="outline">Outline</Button>)
     expect(screen.getByRole('button')).toHaveClass('border-2')
   })
-}) 
+})

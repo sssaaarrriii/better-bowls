@@ -2,7 +2,7 @@
 
 import React, { useState } from "react"
 import { Menu } from "lucide-react"
-import { Button } from "../ui/Button"
+import { Button } from "../ui/button"
 import { Sidebar } from "./Sidebar"
 import Link from "next/link"
 

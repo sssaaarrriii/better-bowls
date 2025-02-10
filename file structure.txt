@@ -29,7 +29,7 @@ better-bowls/
 │   │   │   ├── PromoCode.tsx
 │   │   │   └── PickupDetails.tsx
 │   │   └── ui/
-│   │       ├── Button.tsx
+│   │       ├── button.tsx
 │   │       ├── Input.tsx
 │   │       └── Card.tsx
 │   ├── lib/
