@@ -9,6 +9,18 @@ import { Card } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { loadStripe } from '@stripe/stripe-js'
 
+interface OrderDetails {
+  items: {
+    name: string;
+    quantity: number;
+    price: number;
+  }[];
+  subtotal: number;
+  discount: number;
+  tax: number;
+  total: number;
+}
+
 // TODO: Add Stripe key when ready
 // const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 const stripePromise = loadStripe('dummy_key')
@@ -17,6 +29,38 @@ export default function CheckoutPage() {
   const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null)
+  const [promoApplied, setPromoApplied] = useState(false)
+
+  useEffect(() => {
+    const savedOrder = localStorage.getItem('currentOrder')
+    if (savedOrder) {
+      setOrderDetails(JSON.parse(savedOrder))
+    }
+  }, [])
+
+  const calculateOrderDetails = () => {
+    if (!orderDetails) return {
+      items: [],
+      subtotal: 0,
+      discount: 0,
+      tax: 0,
+      total: 0
+    }
+
+    const subtotal = orderDetails.items[0].price
+    const discount = promoApplied ? subtotal * 0.2 : 0
+    const tax = (subtotal - discount) * 0.095
+    const total = subtotal - discount + tax
+
+    return {
+      items: orderDetails.items,
+      subtotal,
+      discount,
+      tax,
+      total
+    }
+  }
 
   const handleCheckout = async () => {
     setIsLoading(true)
@@ -29,7 +73,7 @@ export default function CheckoutPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          // Order details would come from your app state
+          orderDetails: calculateOrderDetails()
         }),
       })
 
@@ -51,21 +95,22 @@ export default function CheckoutPage() {
     }
   }
 
+  const handlePromoCode = async (code: string) => {
+    if (code.toLowerCase() === 'pvolve20') {
+      setPromoApplied(true)
+      return true
+    }
+    return false
+  }
+
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6">
       <h1 className="font-recoleta text-3xl mb-6">Checkout</h1>
       
-      <OrderSummary orderDetails={{
-        items: [],
-        subtotal: 0,
-        total: 0
-      }} />
+      <OrderSummary orderDetails={calculateOrderDetails()} />
       
       <Card className="p-6">
-        <PromoCode onApply={async (code) => {
-          // Handle promo code validation
-          return true
-        }} />
+        <PromoCode onApply={handlePromoCode} />
       </Card>
       
       <PickupDetails
@@ -82,7 +127,16 @@ export default function CheckoutPage() {
         disabled={isLoading}
         fullWidth
       >
-        {isLoading ? 'Processing...' : 'Proceed to Payment'}
+        {isLoading ? 'Processing...' : 'Pay with Apple Pay'}
+      </Button>
+      
+      <Button
+        onClick={handleCheckout}
+        disabled={isLoading}
+        variant="outline"
+        fullWidth
+      >
+        Confirm
       </Button>
       
       {error && (

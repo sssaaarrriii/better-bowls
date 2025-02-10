@@ -2,83 +2,172 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { BOWL_SIZES, DEFAULT_TOPPINGS } from '../../lib/constants/menu'
-import Button from '../ui/Button'
-import type { OrderItem } from '../../lib/types'
-import ToppingsCustomizer from './ToppingsCustomizer'
+import { Button } from '../ui/Button'
+import { Slideshow } from '../ui/Slideshow'
+import { useRouter } from 'next/navigation'
 
-interface ProductCustomizationProps {
-  onComplete: (data: OrderItem) => void
-  customerName?: string
+interface ToppingOption {
+  name: string
+  calories: number
+  defaultAmount: string
 }
 
-export default function ProductCustomization({ onComplete, customerName }: ProductCustomizationProps) {
-  const [selectedSize, setSelectedSize] = useState<'REGULAR' | 'LARGE'>('REGULAR')
-  const [isCustomizing, setIsCustomizing] = useState(false)
-  const [item, setItem] = useState<OrderItem>({
-    name: 'Classic Bowl',
-    quantity: 1,
-    price: 12.99
-  })
+const TOPPINGS: ToppingOption[] = [
+  { name: 'Organic Chia Seeds', calories: 35, defaultAmount: '1 tsp' },
+  { name: 'Organic Gluten-Free Granola', calories: 35, defaultAmount: '1 tsp' },
+  { name: 'Organic Honey', calories: 20, defaultAmount: '1 tsp' },
+]
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onComplete(item)
+const BOWL_SIZES = {
+  REGULAR: { name: 'Regular', price: 14.95 },
+  LARGE: { name: 'Large', price: 17.95 }
+} as const
+
+export default function ProductCustomization() {
+  const [selectedSize, setSelectedSize] = useState<keyof typeof BOWL_SIZES>('REGULAR')
+  const [toppingAmounts, setToppingAmounts] = useState<Record<string, number>>({})
+  const [extraNotes, setExtraNotes] = useState('')
+  const router = useRouter()
+
+  const handleToppingChange = (toppingName: string, change: number) => {
+    setToppingAmounts(prev => {
+      const newAmount = (prev[toppingName] || 0) + change
+      if (newAmount < 0) return prev
+      return { ...prev, [toppingName]: newAmount }
+    })
+  }
+
+  const handleOrder = () => {
+    const orderDetails = {
+      items: [{
+        name: 'Classic Energy Bowl',
+        quantity: 1,
+        price: BOWL_SIZES[selectedSize].price
+      }],
+      subtotal: BOWL_SIZES[selectedSize].price,
+      discount: 0,
+      tax: BOWL_SIZES[selectedSize].price * 0.095,
+      total: BOWL_SIZES[selectedSize].price * 1.095
+    }
+    
+    localStorage.setItem('currentOrder', JSON.stringify(orderDetails))
+    console.log('Navigating to checkout...');
+    router.push('/checkout')
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4">
-      <div className="mb-8">
+    <div className="bg-[#fcfce4] min-h-screen">
+      {/* Logo and Title */}
+      <div className="text-center pt-8 pb-4">
         <Image
-          src="/images/menu/classic-bowl.jpg"
-          alt="Classic Energy Bowl"
-          width={400}
-          height={400}
-          className="rounded-lg w-full"
+          src="/images/Logomark.png"
+          alt="Better Bowls"
+          width={100}
+          height={100}
+          className="mx-auto mb-4"
+          priority
         />
+        <h1 className="font-header text-reseda-green text-2xl">Classic Energy Bowl</h1>
       </div>
 
-      <h1 className="heading-1 mb-4">Classic Energy Bowl</h1>
-      <p className="body-text mb-6">
-        ${BOWL_SIZES[selectedSize].price} {BOWL_SIZES[selectedSize].calories} Cal.
-      </p>
+      {/* Bowl Images Slideshow */}
+      <div className="max-w-md mx-auto mb-6">
+        <Slideshow />
+      </div>
 
-      <div className="flex gap-4 mb-6">
+      {/* Nutrition Info */}
+      <div className="bg-reseda-green text-white p-4 mx-4 rounded-lg mb-6 text-center">
+        <h2 className="text-xl mb-2">40g Protein, 400 Calories</h2>
+        <p className="text-sm mb-2">
+          Delicious greek yogurt and protein blend topped with strawberries, 
+          blueberries, bananas, organic chia seeds, organic granola (gluten free), 
+          organic coconut shreds, and honey
+        </p>
+        <p className="text-xs">
+          contains: milk, tree nuts (almonds, coconut)
+        </p>
+      </div>
+
+      {/* Size Selection */}
+      <div className="flex gap-4 justify-center mb-6">
         {Object.entries(BOWL_SIZES).map(([size, details]) => (
           <button
             key={size}
-            onClick={() => setSelectedSize(size as 'REGULAR' | 'LARGE')}
-            className={`flex-1 p-4 rounded-full border-2 ${
-              selectedSize === size
-                ? 'border-green-900 bg-green-900 text-beige'
-                : 'border-green-900 text-green-900'
-            }`}
+            onClick={() => setSelectedSize(size as keyof typeof BOWL_SIZES)}
+            className={`px-6 py-2 rounded-full border-2 border-reseda-green font-header
+              ${selectedSize === size 
+                ? 'bg-reseda-green text-white' 
+                : 'bg-transparent text-reseda-green'}`}
           >
-            {details.name}
+            {details.name} ${details.price}
           </button>
         ))}
       </div>
 
-      <Button
-        variant="outline"
-        fullWidth
-        onClick={() => setIsCustomizing(!isCustomizing)}
-        className="mb-6"
-      >
-        Customize
-      </Button>
+      {/* Toppings Customization */}
+      <div className="px-4 space-y-6">
+        <h3 className="text-center text-reseda-green font-header text-xl">Customize</h3>
+        
+        {TOPPINGS.map((topping) => (
+          <div key={topping.name} className="flex items-center justify-between">
+            <div>
+              <Image
+                src={`/images/toppings/${topping.name.toLowerCase().replace(/\s+/g, '-')}.png`}
+                alt={topping.name}
+                width={40}
+                height={40}
+              />
+              <p className="text-reseda-green font-header">{topping.name}</p>
+              <p className="text-sm text-reseda-green/80">{topping.defaultAmount} ({topping.calories} calories)</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => handleToppingChange(topping.name, -1)}
+                className="w-8 h-8 rounded-full border-2 border-reseda-green text-reseda-green"
+              >
+                -
+              </button>
+              <span className="w-8 text-center text-reseda-green">
+                {toppingAmounts[topping.name] || 0}
+              </span>
+              <button 
+                onClick={() => handleToppingChange(topping.name, 1)}
+                className="w-8 h-8 rounded-full border-2 border-reseda-green text-reseda-green"
+              >
+                +
+              </button>
+            </div>
+          </div>
+        ))}
 
-      {isCustomizing && (
-        <ToppingsCustomizer
-          size={selectedSize}
-          defaultToppings={DEFAULT_TOPPINGS[selectedSize]}
+        {/* Extra Notes */}
+        <textarea
+          placeholder="Extra Customization"
+          className="w-full p-4 border-2 border-reseda-green/20 rounded-lg bg-white/50"
+          rows={3}
+          value={extraNotes}
+          onChange={(e) => setExtraNotes(e.target.value)}
         />
-      )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <h2 className="text-lg font-semibold">Hi {customerName}!</h2>
-        <Button type="submit" fullWidth>Continue to Checkout</Button>
-      </form>
+        {/* Order Button */}
+        <button 
+          className="w-full mb-8 bg-reseda-green text-white py-3 rounded-lg"
+          onClick={() => {
+            console.log('Clicked!');
+            handleOrder();
+          }}
+        >
+          Add to Order
+        </button>
+      </div>
+
+      {/* Benefits Section */}
+      <section className="bg-reseda-green text-white p-8">
+        <h2 className="text-2xl font-header text-center mb-6">
+          Benefits of Better Bowls
+        </h2>
+        {/* Benefits content will be added later */}
+      </section>
     </div>
   )
 }
