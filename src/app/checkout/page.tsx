@@ -6,7 +6,7 @@ import { loadStripe } from '@stripe/stripe-js'
 import OrderSummary from '@/components/checkout/order-summary'
 import PromoCode from '@/components/checkout/promo-code'
 import PickupDetails from '@/components/checkout/pickup-details'
-import { Card } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
 interface OrderDetails {
