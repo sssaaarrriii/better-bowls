@@ -1,26 +1,32 @@
 import React from "react";
 import { Card, CardContent } from "./ui/card";
-import { Button } from "./ui/button";
 import { MapPin, Clock } from "lucide-react";
+import Link from 'next/link';
 
 interface LocationCardProps {
-  gymName?: string;
-  date?: string;
-  time?: string;
-  address?: string;
-  isCurrentEvent?: boolean;
+  image: string;
+  name: string;
+  date: string;
+  time: string;
+  address: string;
+  city: string;
+  zip: string;
+  isUpcoming?: boolean;
 }
 
 const LocationCard = ({
-  gymName = "Pvolve SF",
-  date = "January 22, 2025",
-  time = "8:00 AM",
-  address = "1256 Mission St, San Francisco, CA 94103",
-  isCurrentEvent = false,
+  image,
+  name,
+  date,
+  time,
+  address,
+  city,
+  zip,
+  isUpcoming = false,
 }: LocationCardProps) => {
   const handleAddressClick = () => {
     window.open(
-      `https://maps.google.com/?q=${encodeURIComponent(address)}`,
+      `https://maps.google.com/?q=${encodeURIComponent(`${address} ${city} ${zip}`)}`,
       "_blank",
     );
   };
@@ -29,7 +35,7 @@ const LocationCard = ({
     <Card className="w-full max-w-md mx-auto bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardContent className="p-6">
         <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-gray-900">{gymName}</h3>
+          <h3 className="text-xl font-semibold text-gray-900">{name}</h3>
 
           <div className="flex items-center space-x-2 text-gray-600">
             <Clock className="w-4 h-4" />
@@ -41,14 +47,18 @@ const LocationCard = ({
             onClick={handleAddressClick}
           >
             <MapPin className="w-4 h-4" />
-            <span className="underline">{address}</span>
+            <div>
+              <p className="underline">{address}</p>
+              <p className="underline">{`${city}, ${zip}`}</p>
+            </div>
           </div>
 
-          <Button
-            className={`w-full ${isCurrentEvent ? "bg-green-600" : "bg-blue-600"} hover:opacity-90 text-white py-3 rounded-lg transition-colors duration-200`}
+          <Link
+            href="/order"
+            className="block w-full py-3 text-center bg-reseda-green text-[#FCFCE4] border-2 border-[#A8B589] rounded-full hover:bg-white hover:text-reseda-green transition-colors font-header font-semibold"
           >
-            {isCurrentEvent ? "Order Now for Pickup" : "Pre-order for Pickup"}
-          </Button>
+            {isUpcoming ? 'Pre-Order for Pickup' : 'Order Now for Pickup'}
+          </Link>
         </div>
       </CardContent>
     </Card>
