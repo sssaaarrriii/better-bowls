@@ -9,10 +9,6 @@ const GALLERY_IMAGES = [
     alt: 'Classic Energy Bowl with fresh berries and toppings'
   },
   {
-    src: '/images/mediumbowl1.png',
-    alt: 'Energy Bowl with granola and fruit'
-  },
-  {
     src: '/images/heroimage2.png',
     alt: 'Better Bowls presentation'
   }

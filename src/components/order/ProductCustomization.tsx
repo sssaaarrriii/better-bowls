@@ -9,12 +9,14 @@ interface ToppingOption {
   name: string
   calories: number
   defaultAmount: string
+  image: string
 }
 
 const TOPPINGS: ToppingOption[] = [
-  { name: 'Organic Chia Seeds', calories: 35, defaultAmount: '1 tsp' },
-  { name: 'Organic Gluten-Free Granola', calories: 35, defaultAmount: '1 tsp' },
-  { name: 'Organic Honey', calories: 20, defaultAmount: '1 tsp' },
+  { name: 'Organic Chia Seeds', calories: 35, defaultAmount: '1 tsp', image: '/images/chia-seeds.png' },
+  { name: 'Organic Gluten-Free Granola', calories: 35, defaultAmount: '1 tsp', image: '/images/granola.png' },
+  { name: 'Organic Coconut Shreds', calories: 20, defaultAmount: '1/2 tsp', image: '/images/coconut.png' },
+  { name: 'Organic Honey', calories: 20, defaultAmount: '1/2 tsp', image: '/images/honey.png' },
 ]
 
 const BOWL_SIZES = {
@@ -61,18 +63,18 @@ export default function ProductCustomization() {
   }
 
   return (
-    <div className="bg-[#fcfce4] min-h-screen">
+    <div className="bg-[#fcfce4] min-h-screen pt-32">
       {/* Logo and Title */}
-      <div className="text-center pt-8 pb-4">
+      <div className="text-center pb-2">
         <Image
           src="/images/Logomark.png"
           alt="Better Bowls"
           width={100}
           height={100}
-          className="mx-auto mb-4"
+          className="mx-auto mb-2"
           priority
         />
-        <h1 className="font-header text-reseda-green text-2xl">Classic Energy Bowl</h1>
+        <h1 className="font-recolleta-bold text-reseda-green text-4xl italic font-serif">Classic Energy Bowl</h1>
       </div>
 
       {/* Bowl Images Slideshow */}
@@ -110,45 +112,62 @@ export default function ProductCustomization() {
       </div>
 
       {/* Toppings Customization */}
-      <div className="px-4 space-y-6">
-        <h3 className="text-center text-reseda-green font-header text-xl">Customize</h3>
+      <div className="px-4">
+        <h3 className="text-center text-reseda-green font-header text-xl mb-6">Customize</h3>
         
-        {TOPPINGS.map((topping) => (
-          <div key={topping.name} className="flex items-center justify-between">
-            <div>
-              <Image
-                src={`/images/toppings/${topping.name.toLowerCase().replace(/\s+/g, '-')}.png`}
-                alt={topping.name}
-                width={40}
-                height={40}
-              />
-              <p className="text-reseda-green font-header">{topping.name}</p>
-              <p className="text-sm text-reseda-green/80">{topping.defaultAmount} ({topping.calories} calories)</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {TOPPINGS.map((topping) => (
+            <div key={topping.name} className="border-4 border-reseda-green/20 rounded-lg p-6 flex flex-col">
+              {/* Top Section: Image and Name */}
+              <div className="text-center mb-6">
+                <div className="mb-3">
+                  <Image
+                    src={topping.image}
+                    alt={topping.name}
+                    width={48}
+                    height={48}
+                    className="mx-auto"
+                  />
+                </div>
+                <h3 className="font-header text-reseda-green">
+                  {topping.name}
+                </h3>
+              </div>
+
+              {/* Bottom Section: Serving Info and Controls */}
+              <div className="mt-auto">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm text-reseda-green/80">
+                    {toppingAmounts[topping.name] === 0 ? 'None' : `${toppingAmounts[topping.name] || 1} serving`}
+                    {toppingAmounts[topping.name] > 0 && ` (${topping.calories * (toppingAmounts[topping.name] || 1)} calories)`}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => handleToppingChange(topping.name, -1)}
+                      className="w-7 h-7 rounded-full border border-reseda-green text-reseda-green flex items-center justify-center"
+                    >
+                      -
+                    </button>
+                    <span className="w-6 text-center text-reseda-green">
+                      {toppingAmounts[topping.name] === 0 ? '0' : toppingAmounts[topping.name] || 1}
+                    </span>
+                    <button 
+                      onClick={() => handleToppingChange(topping.name, 1)}
+                      className="w-7 h-7 rounded-full border border-reseda-green text-reseda-green flex items-center justify-center"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={() => handleToppingChange(topping.name, -1)}
-                className="w-8 h-8 rounded-full border-2 border-reseda-green text-reseda-green"
-              >
-                -
-              </button>
-              <span className="w-8 text-center text-reseda-green">
-                {toppingAmounts[topping.name] || 0}
-              </span>
-              <button 
-                onClick={() => handleToppingChange(topping.name, 1)}
-                className="w-8 h-8 rounded-full border-2 border-reseda-green text-reseda-green"
-              >
-                +
-              </button>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
 
         {/* Extra Notes */}
         <textarea
           placeholder="Extra Customization"
-          className="w-full p-4 border-2 border-reseda-green/20 rounded-lg bg-white/50"
+          className="w-full mt-6 p-4 border-4 border-reseda-green/20 rounded-lg bg-white/50"
           rows={3}
           value={extraNotes}
           onChange={(e) => setExtraNotes(e.target.value)}
@@ -156,11 +175,8 @@ export default function ProductCustomization() {
 
         {/* Order Button */}
         <button 
-          className="w-full mb-8 bg-reseda-green text-white py-3 rounded-lg"
-          onClick={() => {
-            console.log('Clicked!');
-            handleOrder();
-          }}
+          className="w-full mt-6 mb-8 bg-reseda-green text-white py-3 rounded-lg"
+          onClick={handleOrder}
         >
           Add to Order
         </button>
