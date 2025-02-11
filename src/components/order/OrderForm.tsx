@@ -52,7 +52,7 @@ export default function OrderForm({ onSubmit, isSubmitting }: OrderFormProps) {
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           required
-          className="mb-4"
+          className="mb-4 py-6 px-4 text-lg border-2 border-[#5E7153]/20 rounded-xl focus:border-[#5E7153] focus:ring-1 focus:ring-[#5E7153] transition-colors"
         />
         
         <Input
@@ -61,6 +61,7 @@ export default function OrderForm({ onSubmit, isSubmitting }: OrderFormProps) {
           value={formData.phone}
           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
           required
+          className="py-6 px-4 text-lg border-2 border-[#5E7153]/20 rounded-xl focus:border-[#5E7153] focus:ring-1 focus:ring-[#5E7153] transition-colors"
         />
       </div>
 

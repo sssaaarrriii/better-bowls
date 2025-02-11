@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { Slideshow } from '../ui/Slideshow'
+import { ProductDetailsGallery } from '../ui/ProductDetailsGallery'
 import { useRouter } from 'next/navigation'
 
 interface ToppingOption {
@@ -77,7 +77,7 @@ export default function ProductCustomization() {
 
       {/* Bowl Images Slideshow */}
       <div className="max-w-md mx-auto mb-6">
-        <Slideshow />
+        <ProductDetailsGallery />
       </div>
 
       {/* Nutrition Info */}
