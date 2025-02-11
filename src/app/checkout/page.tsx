@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { loadStripe } from '@stripe/stripe-js'
 import OrderSummary from '@/components/checkout/order-summary'
@@ -25,7 +25,7 @@ interface OrderDetails {
 // const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 const stripePromise = loadStripe('dummy_key')
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -143,5 +143,19 @@ export default function CheckoutPage() {
         <p className="text-red-500 text-center">{error}</p>
       )}
     </div>
+  )
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense 
+      fallback={
+        <div className="max-w-2xl mx-auto p-4">
+          <h1 className="font-recoleta text-3xl mb-6">Loading Checkout...</h1>
+        </div>
+      }
+    >
+      <CheckoutContent />
+    </Suspense>
   )
 }
