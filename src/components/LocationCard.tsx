@@ -1,4 +1,7 @@
+'use client'
+
 import React from "react";
+import Image from "next/image";
 import { Card, CardContent } from "./ui/card";
 import { MapPin, Clock } from "lucide-react";
 import Link from 'next/link';
@@ -33,6 +36,15 @@ const LocationCard = ({
 
   return (
     <Card className="w-full max-w-md mx-auto bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+      <div className="relative w-full h-48">
+        <Image
+          src={image}
+          alt={`${name} location`}
+          fill
+          className="object-cover rounded-t-lg"
+          priority
+        />
+      </div>
       <CardContent className="p-6">
         <div className="space-y-4">
           <h3 className="text-xl font-semibold text-gray-900">{name}</h3>

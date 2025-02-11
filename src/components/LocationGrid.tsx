@@ -2,11 +2,14 @@ import React from "react";
 import LocationCard from "./LocationCard";
 
 interface Location {
-  gymName: string;
+  name: string;
   date: string;
   time: string;
   address: string;
-  isCurrentEvent: boolean;
+  city: string;
+  zip: string;
+  isUpcoming?: boolean;
+  image: string;
 }
 
 interface LocationGridProps {
@@ -16,44 +19,45 @@ interface LocationGridProps {
 const LocationGrid = ({
   locations = [
     {
-      gymName: "Pvolve SF - Mission",
-      date: "January 22, 2024",
-      time: "8:00 AM",
-      address: "1256 Mission St, San Francisco, CA 94103",
-      isCurrentEvent: true,
+      image: '/images/fred-fitness.jpg',
+      name: 'Fred Fitness Santa Monica',
+      date: 'Saturday, February 15',
+      time: '10AM-4PM',
+      address: '1544 4th St.',
+      city: 'Santa Monica',
+      zip: 'CA 90401',
     },
     {
-      gymName: "Pvolve SF - Marina",
-      date: "January 22, 2024",
-      time: "9:30 AM",
-      address: "2055 Union St, San Francisco, CA 94123",
-      isCurrentEvent: false,
-    },
-    {
-      gymName: "Pvolve SF - SoMa",
-      date: "January 22, 2024",
-      time: "11:00 AM",
-      address: "768 Brannan St, San Francisco, CA 94103",
-      isCurrentEvent: false,
+      image: '/images/pvolve.png',
+      name: 'Pvolve West Hollywood',
+      date: 'Saturday, March 3',
+      time: '8AM-2PM',
+      address: '8417 Melrose Ave.',
+      city: 'West Hollywood',
+      zip: 'CA 90069',
+      isUpcoming: true,
     },
   ],
 }: LocationGridProps) => {
   return (
-    <div className="w-full bg-gray-50 p-4 md:p-6 lg:p-8">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-        Available Pickup Locations
-      </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-        {locations.map((location, index) => (
-          <LocationCard
-            key={index}
-            gymName={location.gymName}
-            date={location.date}
-            time={location.time}
-            address={location.address}
-            isCurrentEvent={location.isCurrentEvent}
-          />
-        ))}
+    <div className="bg-[#fcfce4] py-12">
+      <div className="max-w-6xl mx-auto px-4">
+        <h2 className="text-3xl font-header text-center mb-8">Find Us</h2>
+        <div className="grid gap-8 md:grid-cols-2">
+          {locations.map((location, index) => (
+            <LocationCard
+              key={index}
+              name={location.name}
+              date={location.date}
+              time={location.time}
+              address={location.address}
+              city={location.city}
+              zip={location.zip}
+              isUpcoming={location.isUpcoming}
+              image={location.image}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
