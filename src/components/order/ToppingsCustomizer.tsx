@@ -1,3 +1,9 @@
+/**
+ * NOTE: This file is temporarily commented out.
+ * The topping customization functionality has been moved to ProductCustomization.tsx
+ */
+
+/*
 'use client'
 
 import { useState } from 'react'
@@ -61,7 +67,6 @@ export function ToppingsCustomizer() {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {Object.entries(REGULAR_TOPPINGS).map(([key, topping]) => (
         <div key={key} className="border-4 border-reseda-green/20 rounded-lg p-6 flex flex-col">
-          {/* Top Section: Image and Name */}
           <div className="text-center mb-6">
             {topping.image && (
               <div className="mb-3">
@@ -79,7 +84,6 @@ export function ToppingsCustomizer() {
             </h3>
           </div>
 
-          {/* Bottom Section: Serving Info and Controls */}
           <div className="mt-auto">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm text-reseda-green/80">
@@ -122,4 +126,5 @@ export function ToppingsCustomizer() {
       />
     </div>
   )
-} 
+}
+*/ 

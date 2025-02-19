@@ -1,9 +1,22 @@
+/*
+This file is temporarily commented out.
+The bowl selection functionality has been integrated into the main order flow:
+OrderPage -> OrderForm -> ProductCustomization
+
+This component previously handled:
+- Bowl size selection
+- Basic product information display
+- Nutrition information
+
+These features are now available in ProductCustomization.tsx with additional customization options.
+See ProductCustomization.tsx for the active implementation
+
 'use client'
 
 import { useState } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { ToppingsCustomizer } from './ToppingsCustomizer'
+import { useRouter } from 'next/router'
 
 interface BowlSelectionProps {
   customerInfo: {
@@ -30,22 +43,11 @@ const BOWL_SIZES = {
 
 export default function BowlSelection({ customerInfo }: BowlSelectionProps) {
   const [selectedSize, setSelectedSize] = useState<'REGULAR' | 'LARGE'>('REGULAR')
-  const [isCustomizing, setIsCustomizing] = useState(false)
-  const [error, setError] = useState('')
-
-  const handleCustomizeClick = () => {
-    if (!selectedSize) {
-      setError('Please select a size first')
-      return
-    }
-    setError('')
-    setIsCustomizing(!isCustomizing)
-  }
+  const router = useRouter()
 
   return (
     <div className="bg-dutch-white min-h-screen">
       <div className="max-w-2xl mx-auto p-4">
-        {/* Logo */}
         <div className="text-center mb-8">
           <Image
             src="/images/better-bowls-logo-circle.png"
@@ -56,7 +58,6 @@ export default function BowlSelection({ customerInfo }: BowlSelectionProps) {
           />
         </div>
 
-        {/* Title & Price */}
         <h1 className="font-header text-reseda-green text-3xl text-center mb-2">
           Classic Energy Bowl
         </h1>
@@ -64,7 +65,6 @@ export default function BowlSelection({ customerInfo }: BowlSelectionProps) {
           ${BOWL_SIZES[selectedSize].price} • {BOWL_SIZES[selectedSize].protein}g Protein • {BOWL_SIZES[selectedSize].calories} Cal
         </p>
 
-        {/* Bowl Image */}
         <div className="mb-8 relative h-[400px]">
           <Image
             src="/images/mediumbowl1.png"
@@ -75,7 +75,6 @@ export default function BowlSelection({ customerInfo }: BowlSelectionProps) {
           />
         </div>
 
-        {/* Nutrition Info Box */}
         <div className="bg-reseda-green text-white rounded-lg p-6 mb-8 text-center">
           <h2 className="text-2xl mb-4">{BOWL_SIZES[selectedSize].protein}g Protein, {BOWL_SIZES[selectedSize].calories} Calories</h2>
           <p className="mb-4">
@@ -88,7 +87,6 @@ export default function BowlSelection({ customerInfo }: BowlSelectionProps) {
           </p>
         </div>
 
-        {/* Size Selection */}
         <div className="flex gap-4 justify-center mb-6">
           {Object.entries(BOWL_SIZES).map(([size, details]) => (
             <button
@@ -107,38 +105,20 @@ export default function BowlSelection({ customerInfo }: BowlSelectionProps) {
           ))}
         </div>
 
-        {/* Action Buttons */}
         <div className="space-y-4 mb-12">
-          <div>
-            <Button 
-              variant="outline" 
-              fullWidth
-              onClick={handleCustomizeClick}
-            >
-              Customize
-            </Button>
-            {error && (
-              <p className="text-red-500 text-sm mt-1 text-center">
-                {error}
-              </p>
-            )}
-          </div>
-          {isCustomizing && <ToppingsCustomizer />}
           <Button 
             variant="primary" 
             fullWidth
             onClick={() => {
-              // Handle order submission
-              console.log('Order submitted:', {
-                size: selectedSize,
-                customerInfo
-              })
+              localStorage.setItem('selectedSize', selectedSize)
+              router.push('/order/customize')
             }}
           >
-            Order
+            Continue to Customize
           </Button>
         </div>
       </div>
     </div>
   )
-} 
+}
+*/

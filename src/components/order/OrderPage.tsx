@@ -4,10 +4,10 @@
 OrderPage.tsx vs OrderForm.tsx Explanation:
 
 OrderPage.tsx:
-- This is the parent/container component that manages the overall order flow
-- Handles the main state management (current step and customer info)
-- Controls which component to show (OrderForm or BowlSelection)
-- Acts as the orchestrator between different order steps
+- This is the parent/container component that manages the order flow
+- Handles customer information submission
+- Routes to the product customization page
+- Acts as the entry point for the ordering process
 
 OrderForm.tsx: 
 - This is a child component focused only on collecting customer information
@@ -19,7 +19,6 @@ OrderForm.tsx:
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import OrderForm from './OrderForm'
-import BowlSelection from './BowlSelection'
 
 interface CustomerInfo {
   name: string
@@ -28,8 +27,6 @@ interface CustomerInfo {
 }
 
 export default function OrderPage() {
-  const [step, setStep] = useState<'customer-info' | 'bowl-selection'>('customer-info')
-  const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
 
@@ -38,10 +35,7 @@ export default function OrderPage() {
     
     setIsSubmitting(true)
     try {
-      // Store customer info in localStorage
       localStorage.setItem('customerInfo', JSON.stringify(data))
-      
-      // Navigate to product customization instead of /customize
       router.push('/order/customize')
     } catch (error) {
       console.error('Error submitting form:', error)
@@ -52,14 +46,10 @@ export default function OrderPage() {
 
   return (
     <div className="min-h-screen pt-32 bg-beige">
-      {step === 'customer-info' ? (
-        <OrderForm 
-          onSubmit={handleCustomerSubmit} 
-          isSubmitting={isSubmitting}
-        />
-      ) : (
-        <BowlSelection customerInfo={customerInfo} />
-      )}
+      <OrderForm 
+        onSubmit={handleCustomerSubmit} 
+        isSubmitting={isSubmitting}
+      />
     </div>
   )
 }
