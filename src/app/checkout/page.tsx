@@ -1,14 +1,16 @@
 'use client'
 
 import { useEffect, useState, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { loadStripe } from '@stripe/stripe-js'
 import OrderSummary from '@/components/checkout/order-summary'
 import PromoCode from '@/components/checkout/promo-code'
 import PickupDetails from '@/components/checkout/pickup-details'
 import { Button } from '@/components/ui/button'
+import { Elements } from '@stripe/react-stripe-js'
+import PaymentForm from '@/components/checkout/PaymentForm'
 
-interface OrderDetails {
+export interface OrderDetails {
   items: {
     name: string;
     quantity: number;
@@ -20,29 +22,61 @@ interface OrderDetails {
   discount: number;
   tax: number;
   total: number;
+  customerInfo: {
+    name: string;
+    phone: string;
+  };
 }
 
-// TODO: Add Stripe key when ready
-// const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
-const stripePromise = loadStripe('dummy_key')
+// Initialize Stripe
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 function CheckoutContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null)
   const [promoApplied, setPromoApplied] = useState(false)
   const [promoCode, setPromoCode] = useState('')
+  const [clientSecret, setClientSecret] = useState('')
 
   const selectedEvent = JSON.parse(localStorage.getItem('selectedEvent') || '{}')
   const customerInfo = JSON.parse(localStorage.getItem('customerInfo') || '{}')
 
   useEffect(() => {
+    // Load order details from localStorage
     const savedOrder = localStorage.getItem('currentOrder')
     if (savedOrder) {
-      setOrderDetails(JSON.parse(savedOrder))
+      const order = JSON.parse(savedOrder)
+      setOrderDetails(order)
+      
+      // Create PaymentIntent
+      fetch('/api/create-payment-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: order.total,
+          orderId: Date.now().toString() // Generate order ID
+        })
+      })
+      .then(res => res.json())
+      .then(data => setClientSecret(data.clientSecret))
     }
   }, [])
+
+  useEffect(() => {
+    // Check to see if this is a redirect back from Stripe
+    const query = new URLSearchParams(window.location.search);
+    const payment_intent = query.get('payment_intent');
+    const payment_intent_client_secret = query.get('payment_intent_client_secret');
+
+    if (payment_intent && payment_intent_client_secret) {
+      // Handle successful payment here
+      // You might want to redirect to a success page
+      router.push('/order/confirmation');
+    }
+  }, [router]);
 
   const calculateOrderDetails = () => {
     if (!orderDetails) return {
@@ -50,7 +84,11 @@ function CheckoutContent() {
       subtotal: 0,
       discount: 0,
       tax: 0,
-      total: 0
+      total: 0,
+      customerInfo: {
+        name: '',
+        phone: ''
+      }
     }
 
     // Ensure items have size and toppings from localStorage
@@ -61,7 +99,11 @@ function CheckoutContent() {
     }))
 
     const subtotal = items[0].price
-    const discount = promoApplied ? subtotal * 0.2 : 0
+    const discount = promoApplied 
+      ? promoCode.toLowerCase() === 'stripetesting'
+        ? subtotal * 0.99  // 99% off for testing
+        : subtotal * 0.2   // Regular 20% off
+      : 0
     const tax = (subtotal - discount) * 0.095
     const total = subtotal - discount + tax
 
@@ -70,45 +112,13 @@ function CheckoutContent() {
       subtotal,
       discount,
       tax,
-      total
-    }
-  }
-
-  const handleCheckout = async () => {
-    setIsLoading(true)
-    setError('')
-
-    try {
-      const response = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          orderDetails: calculateOrderDetails()
-        }),
-      })
-
-      if (!response.ok) throw new Error('Checkout failed')
-
-      const { sessionId } = await response.json()
-      const stripe = await stripePromise
-
-      const { error } = await stripe!.redirectToCheckout({
-        sessionId,
-      })
-
-      if (error) throw error
-    } catch (err) {
-      setError('Something went wrong. Please try again.')
-      console.error('Checkout error:', err)
-    } finally {
-      setIsLoading(false)
+      total,
+      customerInfo: orderDetails.customerInfo
     }
   }
 
   const handlePromoCode = async (code: string) => {
-    const validCodes = ['pvolve20', 'solidcore20']
+    const validCodes = ['pvolve20', 'solidcore20', 'stripetesting']
     if (validCodes.includes(code.toLowerCase())) {
       setPromoApplied(true)
       setPromoCode(code)
@@ -137,22 +147,17 @@ function CheckoutContent() {
         pickupTime={customerInfo.classTime}
       />
       
-      <Button
-        onClick={handleCheckout}
-        disabled={isLoading}
-        fullWidth
-      >
-        {isLoading ? 'Processing...' : 'Pay with Apple Pay'}
-      </Button>
-      
-      <Button
-        onClick={handleCheckout}
-        disabled={isLoading}
-        variant="outline"
-        fullWidth
-      >
-        Confirm
-      </Button>
+      {clientSecret && (
+        <Elements 
+          stripe={stripePromise} 
+          options={{
+            clientSecret,
+            appearance: { theme: 'stripe' },
+          }}
+        >
+          <PaymentForm orderDetails={orderDetails!} />
+        </Elements>
+      )}
       
       {error && (
         <p className="text-red-500 text-center">{error}</p>
