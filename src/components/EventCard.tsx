@@ -81,6 +81,16 @@ const EventCard = ({
 
           <Link
             href="/order"
+            onClick={() => {
+              localStorage.setItem('selectedEvent', JSON.stringify({
+                location: eventLocation,
+                address,
+                city,
+                zip,
+                date,
+                time
+              }))
+            }}
             className={cn(
               "block w-full py-3 text-center border-2 rounded-full font-header font-semibold transition-colors",
               isUpcoming && eventLocation.includes('Pvolve')

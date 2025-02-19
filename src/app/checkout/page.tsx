@@ -13,6 +13,8 @@ interface OrderDetails {
     name: string;
     quantity: number;
     price: number;
+    size: string;
+    toppings?: Record<string, number>;
   }[];
   subtotal: number;
   discount: number;
@@ -30,6 +32,10 @@ function CheckoutContent() {
   const [error, setError] = useState('')
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null)
   const [promoApplied, setPromoApplied] = useState(false)
+  const [promoCode, setPromoCode] = useState('')
+
+  const selectedEvent = JSON.parse(localStorage.getItem('selectedEvent') || '{}')
+  const customerInfo = JSON.parse(localStorage.getItem('customerInfo') || '{}')
 
   useEffect(() => {
     const savedOrder = localStorage.getItem('currentOrder')
@@ -47,13 +53,20 @@ function CheckoutContent() {
       total: 0
     }
 
-    const subtotal = orderDetails.items[0].price
+    // Ensure items have size and toppings from localStorage
+    const items = orderDetails.items.map(item => ({
+      ...item,
+      size: item.size || 'Regular',
+      toppings: item.toppings || {}
+    }))
+
+    const subtotal = items[0].price
     const discount = promoApplied ? subtotal * 0.2 : 0
     const tax = (subtotal - discount) * 0.095
     const total = subtotal - discount + tax
 
     return {
-      items: orderDetails.items,
+      items,
       subtotal,
       discount,
       tax,
@@ -95,15 +108,17 @@ function CheckoutContent() {
   }
 
   const handlePromoCode = async (code: string) => {
-    if (code.toLowerCase() === 'pvolve20') {
+    const validCodes = ['pvolve20', 'solidcore20']
+    if (validCodes.includes(code.toLowerCase())) {
       setPromoApplied(true)
+      setPromoCode(code)
       return true
     }
     return false
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4 space-y-6">
+    <div className="max-w-2xl mx-auto p-4 pt-32 space-y-6">
       <h1 className="font-recoleta text-3xl mb-6">Checkout</h1>
       
       <OrderSummary orderDetails={calculateOrderDetails()} />
@@ -114,11 +129,12 @@ function CheckoutContent() {
       
       <PickupDetails
         location={{
-          name: 'Pvolve West Hollywood',
-          address: '8417 Melrose Ave',
-          city: 'West Hollywood, CA 90069',
+          name: selectedEvent.location || 'Pvolve West Hollywood',
+          address: selectedEvent.address || '8417 Melrose Ave',
+          city: selectedEvent.city || 'West Hollywood',
+          zip: selectedEvent.zip || 'CA 90069'
         }}
-        pickupTime="2024-03-03T08:45:00Z"
+        pickupTime={customerInfo.classTime}
       />
       
       <Button

@@ -11,6 +11,7 @@ interface PromoCodeProps {
 export default function PromoCode({ onApply }: PromoCodeProps) {
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
   const handleApply = async () => {
@@ -18,10 +19,13 @@ export default function PromoCode({ onApply }: PromoCodeProps) {
 
     setIsLoading(true)
     setError('')
+    setSuccess('')
 
     try {
       const isValid = await onApply(code)
-      if (!isValid) {
+      if (isValid) {
+        setSuccess('Promo code applied successfully!')
+      } else {
         setError('Invalid promo code')
       }
     } catch (err) {
@@ -40,17 +44,19 @@ export default function PromoCode({ onApply }: PromoCodeProps) {
           value={code}
           onChange={(e) => setCode(e.target.value)}
           className="flex-1"
+          disabled={success !== ''}
         />
         <Button
           onClick={handleApply}
-          disabled={!code || isLoading}
+          disabled={!code || isLoading || success !== ''}
           variant="secondary"
           size="sm"
         >
-          Apply
+          {success ? 'Applied' : 'Apply'}
         </Button>
       </div>
       {error && <p className="text-red-500 text-sm">{error}</p>}
+      {success && <p className="text-green-500 text-sm">{success}</p>}
     </div>
   )
 } 

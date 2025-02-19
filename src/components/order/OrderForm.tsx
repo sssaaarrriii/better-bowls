@@ -14,12 +14,36 @@ are disabled but visually indicate future availability.
 */
 
 const CLASS_TIMES = [
-  { id: '8am', label: '8AM Signature50 w/ Coach Nick' },
-  { id: '9am', label: '9AM Signature50 w/ Coach Nick' },
-  { id: '10am', label: '10AM Signature50 w/ Coach Josh' },
-  { id: '11am', label: '11AM Signature50 w/ Coach Josh' },
-  { id: '12pm', label: '12PM Signature50 w/ Coach Larry' },
-  { id: '1pm', label: '1PM Signature50 w/ Coach Larry' },
+  { 
+    id: '0800',
+    label: '8:00 AM Signature50 w/ Coach Nick',
+    displayTime: '8:00 AM'
+  },
+  { 
+    id: '0900',
+    label: '9:00 AM Signature50 w/ Coach Nick',
+    displayTime: '9:00 AM'
+  },
+  { 
+    id: '1000',
+    label: '10:00 AM Signature50 w/ Coach Josh',
+    displayTime: '10:00 AM'
+  },
+  { 
+    id: '1100',
+    label: '11:00 AM Signature50 w/ Coach Josh',
+    displayTime: '11:00 AM'
+  },
+  { 
+    id: '1200',
+    label: '12:00 PM Signature50 w/ Coach Larry',
+    displayTime: '12:00 PM'
+  },
+  { 
+    id: '1300',
+    label: '1:00 PM Signature50 w/ Coach Larry',
+    displayTime: '1:00 PM'
+  }
 ]
 
 interface OrderFormProps {

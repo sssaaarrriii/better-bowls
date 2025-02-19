@@ -4,6 +4,12 @@ interface OrderSummaryProps {
       name: string;
       quantity: number;
       price: number;
+      size: string;
+      toppings?: Record<string, number>;
+      nutrition?: {
+        calories: number;
+        protein: number;
+      };
     }>;
     subtotal: number;
     discount: number;
@@ -13,14 +19,39 @@ interface OrderSummaryProps {
 }
 
 export default function OrderSummary({ orderDetails }: OrderSummaryProps) {
+  const getCustomizationText = (toppings: Record<string, number> = {}) => {
+    const changes: string[] = []
+    for (const [name, amount] of Object.entries(toppings)) {
+      if (amount === 0) {
+        changes.push(`- No ${name.toLowerCase()}`)
+      } else if (amount > 1) {
+        const extraAmount = amount - 1
+        changes.push(`- Extra ${extraAmount} serving${extraAmount > 1 ? 's' : ''} of ${name.toLowerCase()}`)
+      }
+    }
+    return changes
+  }
+
   return (
     <div className="bg-white rounded-lg p-6 shadow-sm">
       <h3 className="font-recoleta text-xl mb-4">Order Summary</h3>
       
       {orderDetails.items.map((item, index) => (
-        <div key={index} className="flex justify-between mb-2">
-          <span>{item.name}</span>
-          <span>${item.price.toFixed(2)}</span>
+        <div key={index}>
+          <div className="flex justify-between mb-1">
+            <span className="font-medium">{item.name} ({item.size})</span>
+            <span>${item.price.toFixed(2)}</span>
+          </div>
+          {item.nutrition && (
+            <p className="text-sm text-gray-600 mb-2">
+              {item.nutrition.protein}g Protein, {item.nutrition.calories} Calories
+            </p>
+          )}
+          <div className="text-sm text-gray-600 mb-4 space-y-1">
+            {getCustomizationText(item.toppings).map((change, i) => (
+              <p key={i}>{change}</p>
+            ))}
+          </div>
         </div>
       ))}
       

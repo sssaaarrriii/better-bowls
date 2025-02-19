@@ -84,13 +84,17 @@ export default function ProductCustomization() {
   }
 
   const handleOrder = () => {
+    const totals = calculateTotals()
     const orderDetails = {
       customerInfo,
       items: [{
         name: 'Classic Energy Bowl',
         size: selectedSize,
         price: BOWL_SIZES[selectedSize].price,
-        toppings: toppingAmounts,
+        toppings: Object.fromEntries(
+          Object.entries(toppingAmounts).filter(([_, amount]) => amount !== 1)
+        ),
+        nutrition: totals,
         notes: extraNotes
       }],
       subtotal: BOWL_SIZES[selectedSize].price,
