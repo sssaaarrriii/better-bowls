@@ -51,19 +51,33 @@ function CheckoutContent() {
       const order = JSON.parse(savedOrder)
       setOrderDetails(order)
       
+      console.log('Creating payment intent for amount:', order.total)  // Debug log
+
       // Create PaymentIntent
       fetch('/api/create-payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: order.total,
-          orderId: Date.now().toString() // Generate order ID
+          orderId: Date.now().toString(),
+          promoCode: promoCode
         })
       })
       .then(res => res.json())
-      .then(data => setClientSecret(data.clientSecret))
+      .then(data => {
+        console.log('Payment Intent response:', data)  // Debug log
+        setClientSecret(data.clientSecret)
+      })
+      .catch(err => {
+        console.error('Payment Intent error:', err)  // Debug log
+        setError('Error creating payment. Please try again.')
+      })
     }
-  }, [])
+  }, [promoCode])  // Add promoCode dependency
+
+  // Add debug log for clientSecret
+  console.log('Current clientSecret:', clientSecret)
+  console.log('Stripe initialized:', !!stripePromise)
 
   useEffect(() => {
     // Check to see if this is a redirect back from Stripe
@@ -147,16 +161,22 @@ function CheckoutContent() {
         pickupTime={customerInfo.classTime}
       />
       
-      {clientSecret && (
-        <Elements 
-          stripe={stripePromise} 
-          options={{
-            clientSecret,
-            appearance: { theme: 'stripe' },
-          }}
-        >
-          <PaymentForm orderDetails={orderDetails!} />
-        </Elements>
+      {clientSecret ? (
+        <div className="bg-white rounded-lg shadow p-6">
+          <Elements 
+            stripe={stripePromise} 
+            options={{
+              clientSecret,
+              appearance: { theme: 'stripe' },
+            }}
+          >
+            <PaymentForm orderDetails={orderDetails!} />
+          </Elements>
+        </div>
+      ) : (
+        <div className="text-center text-gray-500">
+          Loading payment form...
+        </div>
       )}
       
       {error && (

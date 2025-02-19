@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import OrderSummary from '@/components/checkout/order-summary'
 import type { OrderDetails } from '@/app/checkout/page'
 
-export default function ConfirmationPage() {
+function ConfirmationContent() {
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null)
   const searchParams = useSearchParams()
 
@@ -53,5 +53,18 @@ export default function ConfirmationPage() {
         </div>
       )}
     </div>
+  )
+}
+
+// Wrap the main content in Suspense
+export default function ConfirmationPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-2xl mx-auto p-4 pt-32 text-center">
+        Loading order details...
+      </div>
+    }>
+      <ConfirmationContent />
+    </Suspense>
   )
 } 
