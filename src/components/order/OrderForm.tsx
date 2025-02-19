@@ -3,10 +3,23 @@
 import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 
+/*
+Button Text Logic for Events:
+- Regular events: "Order Now for Pickup"
+- Upcoming Solidcore event: "Pre-Order for Pickup"
+- Upcoming Pvolve event: "Pre-Orders Opening Soon" (grayed out & disabled)
+
+This matches the button states in EventCard.tsx where Pvolve pre-orders 
+are disabled but visually indicate future availability.
+*/
+
 const CLASS_TIMES = [
-  { id: '8am', label: '8AM Strength and Sculpt (Nat)' },
-  { id: '930am', label: '9:30AM Sculpt and Burn (Nat)' },
-  { id: '11am', label: '11AM Strength and Sculpt (Nat)' },
+  { id: '8am', label: '8AM Signature50 w/ Coach Nick' },
+  { id: '9am', label: '9AM Signature50 w/ Coach Nick' },
+  { id: '10am', label: '10AM Signature50 w/ Coach Josh' },
+  { id: '11am', label: '11AM Signature50 w/ Coach Josh' },
+  { id: '12pm', label: '12PM Signature50 w/ Coach Larry' },
+  { id: '1pm', label: '1PM Signature50 w/ Coach Larry' },
 ]
 
 interface OrderFormProps {
@@ -67,7 +80,7 @@ export default function OrderForm({ onSubmit, isSubmitting }: OrderFormProps) {
 
       <div className="mb-12">
         <h2 className="text-[#5E7153] text-2xl text-center mb-2 font-header">
-          Which class are you taking on Saturday, March 3rd?
+          Which class are you taking on Saturday, February 22nd?
         </h2>
         <p className="text-center text-[#5E7153] text-sm mb-6">
           We'll have your bowl ready after class!

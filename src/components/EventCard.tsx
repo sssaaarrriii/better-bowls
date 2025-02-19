@@ -81,9 +81,19 @@ const EventCard = ({
 
           <Link
             href="/order"
-            className="block w-full py-3 text-center bg-reseda-green text-[#FCFCE4] border-2 border-[#A8B589] rounded-full hover:bg-white hover:text-reseda-green transition-colors font-header font-semibold"
+            className={cn(
+              "block w-full py-3 text-center border-2 rounded-full font-header font-semibold transition-colors",
+              isUpcoming && eventLocation.includes('Pvolve')
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed border-gray-300 pointer-events-none'
+                : 'bg-reseda-green text-[#FCFCE4] border-[#A8B589] hover:bg-white hover:text-reseda-green'
+            )}
           >
-            {isUpcoming ? 'Pre-Order for Pickup' : 'Order Now for Pickup'}
+            {isUpcoming && eventLocation.includes('Pvolve') 
+              ? 'Pre-Orders Opening Soon'
+              : isUpcoming 
+                ? 'Pre-Order for Pickup' 
+                : 'Order Now for Pickup'
+            }
           </Link>
         </div>
       </div>
