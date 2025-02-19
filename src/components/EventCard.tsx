@@ -1,15 +1,15 @@
- 'use client'
+'use client'
 
 import React from "react";
 import Image from "next/image";
-import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Clock } from "lucide-react";
 import Link from 'next/link';
+import { cn } from "@/lib/utils";
 
 interface EventCardProps {
   image: string;
-  eventLocation: string;  // renamed from 'name'
-  eventName?: string;     // new optional field
+  eventLocation: string;
+  eventName?: string;
   date: string;
   time: string;
   address: string;
@@ -37,7 +37,9 @@ const EventCard = ({
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+    <div className={cn(
+      "w-full max-w-md mx-auto bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
+    )}>
       <div className="relative w-full h-48">
         <Image
           src={image}
@@ -47,14 +49,15 @@ const EventCard = ({
           priority
         />
       </div>
-      <CardContent className="p-6">
+      <div className="p-6">
         <div className="space-y-4">
           <div className="space-y-1">
             <h3 className="text-xl font-semibold text-gray-900">{eventLocation}</h3>
             {eventName && (
-              <h4 className={`text-lg font-semibold text-gray-900 inline-block px-2 rounded ${
+              <h4 className={cn(
+                "text-lg font-semibold text-gray-900 inline-block px-2 rounded",
                 eventLocation.includes('solidcore') ? 'bg-[#D5E3F0]' : 'bg-[#F5E6D3]'
-              }`}>
+              )}>
                 {eventName}
               </h4>
             )}
@@ -83,8 +86,8 @@ const EventCard = ({
             {isUpcoming ? 'Pre-Order for Pickup' : 'Order Now for Pickup'}
           </Link>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

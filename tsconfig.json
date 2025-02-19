@@ -30,7 +30,10 @@
         "name": "next"
       }
     ],
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "types": [
+      "node"
+    ]
   },
   "include": [
     "src",
