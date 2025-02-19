@@ -6,5 +6,7 @@ export { Badge } from './badge'
 
 // Feature exports
 export * from './squiggle'
-export { default as LocationCard } from '../LocationCard'
-export * from './radio-group' 
+export * from './radio-group'
+export { default as EventCard } from '../EventCard'
+
+// remove LocationCard export 

@@ -1,14 +1,15 @@
-'use client'
+ 'use client'
 
 import React from "react";
 import Image from "next/image";
-import { Card, CardContent } from "./ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Clock } from "lucide-react";
 import Link from 'next/link';
 
-interface LocationCardProps {
+interface EventCardProps {
   image: string;
-  name: string;
+  eventLocation: string;  // renamed from 'name'
+  eventName?: string;     // new optional field
   date: string;
   time: string;
   address: string;
@@ -17,16 +18,17 @@ interface LocationCardProps {
   isUpcoming?: boolean;
 }
 
-const LocationCard = ({
+const EventCard = ({
   image,
-  name,
+  eventLocation,
+  eventName,
   date,
   time,
   address,
   city,
   zip,
   isUpcoming = false,
-}: LocationCardProps) => {
+}: EventCardProps) => {
   const handleAddressClick = () => {
     window.open(
       `https://maps.google.com/?q=${encodeURIComponent(`${address} ${city} ${zip}`)}`,
@@ -39,7 +41,7 @@ const LocationCard = ({
       <div className="relative w-full h-48">
         <Image
           src={image}
-          alt={`${name} location`}
+          alt={`${eventLocation} location`}
           fill
           className="object-cover rounded-t-lg"
           priority
@@ -47,7 +49,16 @@ const LocationCard = ({
       </div>
       <CardContent className="p-6">
         <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-gray-900">{name}</h3>
+          <div className="space-y-1">
+            <h3 className="text-xl font-semibold text-gray-900">{eventLocation}</h3>
+            {eventName && (
+              <h4 className={`text-lg font-semibold text-gray-900 inline-block px-2 rounded ${
+                eventLocation.includes('solidcore') ? 'bg-[#D5E3F0]' : 'bg-[#F5E6D3]'
+              }`}>
+                {eventName}
+              </h4>
+            )}
+          </div>
 
           <div className="flex items-center space-x-2 text-gray-600">
             <Clock className="w-4 h-4" />
@@ -60,8 +71,8 @@ const LocationCard = ({
           >
             <MapPin className="w-4 h-4" />
             <div>
-              <p className="underline">{address}</p>
-              <p className="underline">{`${city}, ${zip}`}</p>
+              <p>{address}</p>
+              <p>{`${city}, ${zip}`}</p>
             </div>
           </div>
 
@@ -77,4 +88,4 @@ const LocationCard = ({
   );
 };
 
-export default LocationCard;
+export default EventCard;

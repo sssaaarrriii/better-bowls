@@ -1,12 +1,13 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { LocationCard } from '@/components/ui'
+import { EventCard } from '@/components/ui'
 // Keep the import but comment it out for now
 // import { Slideshow } from '../components/ui/Slideshow'
 
-interface LocationCard {
+interface Event {
   image: string
-  name: string
+  eventLocation: string
+  eventName?: string
   date: string
   time: string
   address: string
@@ -15,19 +16,21 @@ interface LocationCard {
   isUpcoming?: boolean
 }
 
-const locations: LocationCard[] = [
+const events: Event[] = [
   {
-    image: '/images/fred-fitness.jpg',
-    name: 'Fred Fitness Santa Monica',
-    date: 'Saturday, February 15',
-    time: '10AM-4PM',
-    address: '1544 4th St.',
-    city: 'Santa Monica',
-    zip: 'CA 90401',
+    image: '/images/solidcore.jpg',
+    eventLocation: '[solidcore] West Hollywood',
+    eventName: '2 Year Anniversary Party',
+    date: 'Saturday, February 22',
+    time: '8:30AM - 2:30PM',
+    address: '9001 Santa Monica Blvd Suite 103',
+    city: 'West Hollywood',
+    zip: 'CA 90069',
+    isUpcoming: true,
   },
   {
     image: '/images/pvolve.png',
-    name: 'Pvolve West Hollywood',
+    eventLocation: 'Pvolve West Hollywood',
     date: 'Saturday, March 3',
     time: '8AM-2PM',
     address: '8417 Melrose Ave.',
@@ -81,34 +84,32 @@ export default function Home() {
         />
       </div>
       
-      {/* Locations Section - reduced spacing */}
+      {/* Events Section */}
       <section className="px-4 pb-8 pt-8 bg-[#fcfce4]">
         <h2 className="text-reseda-green text-3xl font-header font-black text-center mb-8">
-          Locations
+          Events
         </h2>
         
         <div className="max-w-md mx-auto">
-          {/* Fred Fitness Location */}
-          <LocationCard
-            image="/images/fred-fitness.jpg"
-            name="Fred Fitness Santa Monica"
-            date="Saturday, February 15"
-            time="10AM-4PM"
-            address="1544 4th St."
-            city="Santa Monica"
-            zip="CA 90401"
+          {/* Solidcore Event */}
+          <EventCard
+            image="/images/solidcore.jpg"
+            eventLocation="[solidcore] West Hollywood"
+            eventName="2 Year Anniversary Party"
+            date="Saturday, February 22"
+            time="8:30AM - 2:30PM"
+            address="9001 Santa Monica Blvd Suite 103"
+            city="West Hollywood"
+            zip="CA 90069"
+            isUpcoming={true}
           />
 
-          {/* Coming Up Text - changed from "Coming Soon" */}
-          <h2 className="text-reseda-green text-2xl font-header font-black text-center my-8">
-            Coming Up
-          </h2>
-
-          {/* Pvolve Location */}
-          <LocationCard
+          {/* Pvolve Event */}
+          <EventCard
             image="/images/pvolve.png"
-            name="Pvolve West Hollywood"
-            date="Saturday, March 3"
+            eventLocation="Pvolve West Hollywood"
+            eventName="January Challenge Celebration"
+            date="Friday, March 1"
             time="8AM-2PM"
             address="8417 Melrose Ave."
             city="West Hollywood"

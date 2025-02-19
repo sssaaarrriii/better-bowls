@@ -1,8 +1,9 @@
 import React from "react";
-import LocationCard from "./LocationCard";
+import { EventCard } from "@/components/ui";
 
 interface Location {
-  name: string;
+  eventLocation: string;
+  eventName?: string;
   date: string;
   time: string;
   address: string;
@@ -20,7 +21,7 @@ const LocationGrid = ({
   locations = [
     {
       image: '/images/fred-fitness.jpg',
-      name: 'Fred Fitness Santa Monica',
+      eventLocation: 'Fred Fitness Santa Monica',
       date: 'Saturday, February 15',
       time: '10AM-4PM',
       address: '1544 4th St.',
@@ -29,7 +30,7 @@ const LocationGrid = ({
     },
     {
       image: '/images/pvolve.png',
-      name: 'Pvolve West Hollywood',
+      eventLocation: 'Pvolve West Hollywood',
       date: 'Saturday, March 3',
       time: '8AM-2PM',
       address: '8417 Melrose Ave.',
@@ -45,9 +46,10 @@ const LocationGrid = ({
         <h2 className="text-3xl font-header text-center mb-8">Find Us</h2>
         <div className="grid gap-8 md:grid-cols-2">
           {locations.map((location, index) => (
-            <LocationCard
+            <EventCard
               key={index}
-              name={location.name}
+              eventLocation={location.eventLocation}
+              eventName={location.eventName}
               date={location.date}
               time={location.time}
               address={location.address}
