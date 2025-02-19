@@ -31,7 +31,8 @@ const events: Event[] = [
   {
     image: '/images/pvolve.png',
     eventLocation: 'Pvolve West Hollywood',
-    date: 'Saturday, March 3',
+    eventName: 'Celebrating January Challenge',
+    date: 'Saturday, March 1',
     time: '8AM-2PM',
     address: '8417 Melrose Ave.',
     city: 'West Hollywood',
@@ -91,31 +92,12 @@ export default function Home() {
         </h2>
         
         <div className="max-w-md mx-auto">
-          {/* Solidcore Event */}
-          <EventCard
-            image="/images/solidcore.jpg"
-            eventLocation="[solidcore] West Hollywood"
-            eventName="2 Year Anniversary Party"
-            date="Saturday, February 22"
-            time="8:30AM - 2:30PM"
-            address="9001 Santa Monica Blvd Suite 103"
-            city="West Hollywood"
-            zip="CA 90069"
-            isUpcoming={true}
-          />
-
-          {/* Pvolve Event */}
-          <EventCard
-            image="/images/pvolve.png"
-            eventLocation="Pvolve West Hollywood"
-            eventName="January Challenge Celebration"
-            date="Friday, March 1"
-            time="8AM-2PM"
-            address="8417 Melrose Ave."
-            city="West Hollywood"
-            zip="CA 90069"
-            isUpcoming={true}
-          />
+          {events.map((event, index) => (
+            <EventCard
+              key={index}
+              {...event}
+            />
+          ))}
         </div>
       </section>
 
