@@ -6,7 +6,6 @@ import { loadStripe } from '@stripe/stripe-js'
 import OrderSummary from '@/components/checkout/order-summary'
 import PromoCode from '@/components/checkout/promo-code'
 import PickupDetails from '@/components/checkout/pickup-details'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
 interface OrderDetails {
@@ -109,9 +108,9 @@ function CheckoutContent() {
       
       <OrderSummary orderDetails={calculateOrderDetails()} />
       
-      <Card className="p-6">
+      <div className="bg-white rounded-lg shadow p-6">
         <PromoCode onApply={handlePromoCode} />
-      </Card>
+      </div>
       
       <PickupDetails
         location={{
