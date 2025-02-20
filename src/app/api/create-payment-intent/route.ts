@@ -22,7 +22,10 @@ export async function POST(req: Request) {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(finalAmount * 100),
       currency: 'usd',
-      payment_method_types: ['card', 'apple_pay'],
+      payment_method_types: ['card', 'link'],
+      automatic_payment_methods: {
+        enabled: true,
+      },
       metadata: {
         orderId,
         promoCode: promoCode || ''

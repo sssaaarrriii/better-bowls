@@ -26,6 +26,7 @@ export interface OrderDetails {
     name: string;
     phone: string;
   };
+  promoCode?: string;
 }
 
 // Initialize Stripe
@@ -78,7 +79,8 @@ function CheckoutContent() {
       customerInfo: {
         name: '',
         phone: ''
-      }
+      },
+      promoCode: ''
     }
 
     // Ensure items have size and toppings from localStorage
@@ -103,7 +105,8 @@ function CheckoutContent() {
       discount,
       tax,
       total,
-      customerInfo: orderDetails.customerInfo
+      customerInfo: orderDetails.customerInfo,
+      promoCode: promoCode
     }
   }
 
@@ -138,16 +141,16 @@ function CheckoutContent() {
       />
       
       <Elements 
-        key={calculateOrderDetails().total}
         stripe={stripePromise} 
         options={{
           mode: 'payment',
           amount: Math.round(calculateOrderDetails().total * 100),
           currency: 'usd',
-          appearance: { theme: 'stripe' }
+          appearance: { theme: 'stripe' },
+          paymentMethodTypes: ['card', 'link'],
         }}
       >
-        <PaymentForm orderDetails={orderDetails!} />
+        <PaymentForm orderDetails={calculateOrderDetails()} />
       </Elements>
       
       {error && (

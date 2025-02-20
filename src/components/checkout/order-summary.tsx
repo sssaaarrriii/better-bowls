@@ -1,3 +1,5 @@
+import React, { useMemo } from 'react'
+
 interface OrderSummaryProps {
   orderDetails: {
     items: Array<{
@@ -15,6 +17,7 @@ interface OrderSummaryProps {
     discount: number;
     tax: number;
     total: number;
+    promoCode?: string;
   }
 }
 
@@ -31,6 +34,26 @@ export default function OrderSummary({ orderDetails }: OrderSummaryProps) {
     }
     return changes
   }
+
+  // This is where ALL promo code discounts are initially calculated
+  // This calculation is used throughout the app for consistency
+  const discount = useMemo(() => {
+    if (!orderDetails.promoCode) return 0
+    const code = orderDetails.promoCode.toLowerCase()
+    
+    // All promo codes are calculated here:
+    // - pvolve20, solidcore20: 20% off
+    // - stripetesting: 90% off for testing live payments
+    switch (code) {
+      case 'pvolve20':
+      case 'solidcore20':
+        return orderDetails.subtotal * 0.20 // 20% off
+      case 'stripetesting':
+        return orderDetails.subtotal * 0.90 // Changed from 0.99 to 0.90 (90% off)
+      default:
+        return 0
+    }
+  }, [orderDetails.promoCode, orderDetails.subtotal])
 
   return (
     <div className="bg-white rounded-lg p-6 shadow-sm">
