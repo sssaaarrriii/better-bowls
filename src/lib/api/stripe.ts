@@ -10,6 +10,20 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2022-11-15'
 })
 
+// Define the type locally
+export interface ExpressCheckoutElementClickResolveDetails {
+  phoneNumberRequired: boolean
+  emailRequired: boolean
+  shippingAddressRequired: boolean
+  billingAddressRequired: boolean
+  lineItems: Array<{
+    name: string
+    amount: number
+  }>
+  amount: number
+  label: string
+}
+
 export async function createCheckoutSession(order: any) {
   return await stripe.checkout.sessions.create({
     payment_method_types: ['card'],

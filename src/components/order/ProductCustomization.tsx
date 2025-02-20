@@ -85,6 +85,8 @@ export default function ProductCustomization() {
 
   const handleOrder = () => {
     const totals = calculateTotals()
+    const selectedEvent = JSON.parse(localStorage.getItem('selectedEvent') || '{}')
+    
     const orderDetails = {
       customerInfo,
       items: [{
@@ -100,7 +102,9 @@ export default function ProductCustomization() {
       subtotal: BOWL_SIZES[selectedSize].price,
       discount: 0,
       tax: BOWL_SIZES[selectedSize].price * 0.095,
-      total: BOWL_SIZES[selectedSize].price * 1.095
+      total: BOWL_SIZES[selectedSize].price * 1.095,
+      pickupLocation: selectedEvent.location,
+      pickupTime: customerInfo.classTime
     }
     
     localStorage.setItem('currentOrder', JSON.stringify(orderDetails))

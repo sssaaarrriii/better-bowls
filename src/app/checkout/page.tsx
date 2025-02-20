@@ -8,28 +8,36 @@ import PromoCode from '@/components/checkout/promo-code'
 import PickupDetails from '@/components/checkout/pickup-details'
 import { Button } from '@/components/ui/button'
 import { Elements } from '@stripe/react-stripe-js'
-import PaymentForm from '@/components/checkout/PaymentForm'
+import ExpressCheckout from '@/components/checkout/ExpressCheckout'
 
 export interface OrderDetails {
-  items: {
-    name: string;
-    quantity: number;
-    price: number;
-    size: string;
-    toppings?: Record<string, number>;
-  }[];
-  subtotal: number;
-  discount: number;
-  tax: number;
-  total: number;
+  items: Array<{
+    name: string
+    quantity: number
+    price: number
+    size: string
+    toppings?: Record<string, number>
+    nutrition?: {
+      calories: number
+      protein: number
+    }
+    notes?: string
+  }>
+  subtotal: number
+  discount: number
+  tax: number
+  total: number
   customerInfo: {
-    name: string;
-    phone: string;
-  };
-  promoCode?: string;
+    name: string
+    phone: string
+    email?: string
+  }
+  promoCode?: string
+  pickupLocation?: string
+  pickupTime?: string
 }
 
-// Initialize Stripe
+// Initialize Stripe outside component to prevent re-initialization
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 function CheckoutContent() {
@@ -88,10 +96,14 @@ function CheckoutContent() {
   }, [orderDetails, promoApplied, promoCode])
 
   // Memoize calculated order details
-  const calculatedOrderDetails = useMemo(() => 
-    calculateOrderDetails(), 
-    [calculateOrderDetails]
-  )
+  const calculatedOrderDetails = useMemo(() => {
+    const details = calculateOrderDetails()
+    return {
+      ...details,
+      pickupLocation: selectedEvent.location,
+      pickupTime: customerInfo.classTime
+    }
+  }, [calculateOrderDetails, selectedEvent, customerInfo])
 
   useEffect(() => {
     const savedOrder = localStorage.getItem('currentOrder')
@@ -148,17 +160,24 @@ function CheckoutContent() {
         pickupTime={customerInfo.classTime}
       />
       
+      {/* Elements provider wraps the ExpressCheckout component
+          - Provides stripe instance and elements context
+          - Configures payment flow with mode, amount, currency */}
       <Elements 
         stripe={stripePromise} 
         options={{
           mode: 'payment',
           amount: Math.round(calculatedOrderDetails.total * 100),
           currency: 'usd',
-          appearance: { theme: 'stripe' },
-          paymentMethodTypes: ['card', 'link'],
+          appearance: {
+            theme: 'stripe',
+            variables: {
+              colorPrimary: '#5E7153',
+            }
+          }
         }}
       >
-        <PaymentForm orderDetails={calculatedOrderDetails} />
+        <ExpressCheckout orderDetails={calculatedOrderDetails} />
       </Elements>
       
       {error && (

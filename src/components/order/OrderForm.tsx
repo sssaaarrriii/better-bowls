@@ -66,6 +66,16 @@ export default function OrderForm({ onSubmit, isSubmitting }: OrderFormProps) {
                      formData.phone.trim() !== '' && 
                      formData.classTime !== ''
 
+  const formatPhoneNumber = (phone: string) => {
+    const cleaned = phone.replace(/\D/g, '')
+    return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3')
+  }
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhoneNumber(e.target.value)
+    setFormData(prev => ({ ...prev, phone: formatted }))
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (isFormValid && !isSubmitting) {
@@ -96,8 +106,9 @@ export default function OrderForm({ onSubmit, isSubmitting }: OrderFormProps) {
           placeholder="Insert Number*"
           type="tel"
           value={formData.phone}
-          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+          onChange={handlePhoneChange}
           required
+          pattern="\(\d{3}\) \d{3}-\d{4}"
           className="py-6 px-4 text-lg border-2 border-[#5E7153]/20 rounded-xl focus:border-[#5E7153] focus:ring-1 focus:ring-[#5E7153] transition-colors"
         />
       </div>

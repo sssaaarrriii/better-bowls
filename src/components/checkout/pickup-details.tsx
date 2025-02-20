@@ -11,8 +11,12 @@ interface PickupDetailsProps {
 }
 
 export default function PickupDetails({ location, pickupTime }: PickupDetailsProps) {
-  const selectedEvent = JSON.parse(localStorage.getItem('selectedEvent') || '{}')
-  const customerInfo = JSON.parse(localStorage.getItem('customerInfo') || '{}')
+  const selectedEvent = typeof window !== 'undefined' 
+    ? JSON.parse(localStorage.getItem('selectedEvent') || '{}')
+    : {}
+  const customerInfo = typeof window !== 'undefined'
+    ? JSON.parse(localStorage.getItem('customerInfo') || '{}')
+    : {}
 
   const getPickupTime = () => {
     if (!customerInfo.classTime) return pickupTime
@@ -40,16 +44,18 @@ export default function PickupDetails({ location, pickupTime }: PickupDetailsPro
       <h3 className="font-recoleta text-xl mb-4">Pickup details</h3>
       <div className="space-y-4">
         <div>
-          <h4 className="font-recoleta text-lg">{selectedEvent.location || location.name}</h4>
+          <h4 className="font-recoleta text-lg">
+            {selectedEvent.location || location.name || 'Location to be determined'}
+          </h4>
           <p className="text-gray-600">
-            {selectedEvent.address || location.address}
+            {selectedEvent.address || location.address || 'Address pending'}
             <br />
-            {selectedEvent.city || location.city}, {selectedEvent.zip}
+            {selectedEvent.city || location.city}, {selectedEvent.zip || location.zip}
           </p>
         </div>
         <div>
           <h4 className="font-recoleta text-lg">Ready at</h4>
-          <p className="text-gray-600">{getPickupTime()}</p>
+          <p className="text-gray-600">{getPickupTime() || 'Time to be determined'}</p>
         </div>
       </div>
     </div>
