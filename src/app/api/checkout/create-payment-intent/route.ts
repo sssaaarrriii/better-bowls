@@ -45,13 +45,23 @@ export async function POST(req: Request) {
       )
     }
 
+    // Validate and adjust amount
+    const minAmount = 50; // 50 cents minimum
+    const adjustedAmount = Math.max(minAmount, amount);
+
     // Create payment intent with Express Checkout settings
     const paymentIntent = await stripe.paymentIntents.create({
-      amount,
+      amount: adjustedAmount,
       currency: 'usd',
       automatic_payment_methods: {
         enabled: true,
         allow_redirects: 'never'
+      },
+      payment_method_types: ['card', 'apple_pay'],
+      payment_method_options: {
+        card: {
+          request_three_d_secure: 'automatic'
+        }
       },
       metadata: {
         customerName: orderDetails.customerInfo.name,

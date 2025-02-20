@@ -8,6 +8,7 @@ import PromoCode from '@/components/checkout/promo-code'
 import PickupDetails from '@/components/checkout/pickup-details'
 import { Button } from '@/components/ui/button'
 import { Elements } from '@stripe/react-stripe-js'
+import type { StripeElementsOptions } from '@stripe/stripe-js'
 import ExpressCheckout from '@/components/checkout/ExpressCheckout'
 
 export interface OrderDetails {
@@ -37,7 +38,7 @@ export interface OrderDetails {
   pickupTime?: string
 }
 
-// Initialize Stripe outside component to prevent re-initialization
+// Load Stripe outside component to avoid recreating on each render
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 function CheckoutContent() {
@@ -50,7 +51,22 @@ function CheckoutContent() {
   const [promoCode, setPromoCode] = useState('')
   const [currentTotal, setCurrentTotal] = useState(0)
 
-  const selectedEvent = JSON.parse(localStorage.getItem('selectedEvent') || '{}')
+  // Get selected event from localStorage with proper typing
+  const selectedEvent = useMemo(() => {
+    const storedEvent = localStorage.getItem('selectedEvent')
+    if (!storedEvent) {
+      return {
+        location: '',
+        address: '',
+        city: '',
+        zip: '',
+        date: '',
+        time: ''
+      }
+    }
+    return JSON.parse(storedEvent)
+  }, [])
+
   const customerInfo = JSON.parse(localStorage.getItem('customerInfo') || '{}')
 
   // Calculate order details with memoization
@@ -101,7 +117,7 @@ function CheckoutContent() {
     return {
       ...details,
       pickupLocation: selectedEvent.location,
-      pickupTime: customerInfo.classTime
+      pickupTime: customerInfo.classTime || selectedEvent.time
     }
   }, [calculateOrderDetails, selectedEvent, customerInfo])
 
@@ -130,6 +146,13 @@ function CheckoutContent() {
     }
   }, [router])
 
+  useEffect(() => {
+    const storedEvent = localStorage.getItem('selectedEvent')
+    if (!storedEvent) {
+      router.push('/')
+    }
+  }, [router])
+
   const handlePromoCode = async (code: string) => {
     const validCodes = ['pvolve20', 'solidcore20', 'stripetesting']
     if (validCodes.includes(code.toLowerCase())) {
@@ -138,6 +161,18 @@ function CheckoutContent() {
       return true
     }
     return false
+  }
+
+  const options: StripeElementsOptions = {
+    mode: 'payment',
+    amount: Math.max(50, Math.round((calculatedOrderDetails.subtotal - calculatedOrderDetails.discount + calculatedOrderDetails.tax) * 100)),
+    currency: 'usd',
+    appearance: {
+      theme: 'stripe' as const,
+      variables: {
+        colorPrimary: '#5E7153'
+      }
+    }
   }
 
   return (
@@ -152,31 +187,18 @@ function CheckoutContent() {
       
       <PickupDetails
         location={{
-          name: selectedEvent.location || 'Pvolve West Hollywood',
-          address: selectedEvent.address || '8417 Melrose Ave',
-          city: selectedEvent.city || 'West Hollywood',
-          zip: selectedEvent.zip || 'CA 90069'
+          name: selectedEvent.location,
+          address: selectedEvent.address,
+          city: selectedEvent.city,
+          zip: selectedEvent.zip
         }}
-        pickupTime={customerInfo.classTime}
+        pickupTime={customerInfo.classTime || selectedEvent.time}
       />
       
       {/* Elements provider wraps the ExpressCheckout component
           - Provides stripe instance and elements context
           - Configures payment flow with mode, amount, currency */}
-      <Elements 
-        stripe={stripePromise} 
-        options={{
-          mode: 'payment',
-          amount: Math.round(calculatedOrderDetails.total * 100),
-          currency: 'usd',
-          appearance: {
-            theme: 'stripe',
-            variables: {
-              colorPrimary: '#5E7153',
-            }
-          }
-        }}
-      >
+      <Elements stripe={stripePromise} options={options}>
         <ExpressCheckout orderDetails={calculatedOrderDetails} />
       </Elements>
       

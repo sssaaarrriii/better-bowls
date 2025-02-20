@@ -1,239 +1,181 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useStripe, useElements } from '@stripe/react-stripe-js'
+import { useStripe, useElements, ExpressCheckoutElement } from '@stripe/react-stripe-js'
 import type { OrderDetails } from '@/app/checkout/page'
-import type { 
-  Stripe,
-  StripeElements,
-  StripeExpressCheckoutElementConfirmEvent, 
-  StripeExpressCheckoutElementClickEvent,
-  StripeExpressCheckoutElement
-} from '@stripe/stripe-js'
-
-// Define the expected shape of click event resolution
-interface ExpressCheckoutClickResolveDetails {
-  phoneNumberRequired: boolean
-  emailRequired: boolean
-  shippingAddressRequired: boolean
-  billingAddressRequired: boolean
-  lineItems: Array<{
-    name: string
-    amount: number
-  }>
-  total: {
-    label: string
-    amount: number
-  }
-}
 
 interface ExpressCheckoutProps {
   orderDetails: OrderDetails
 }
 
+/**
+ * ExpressCheckout component handles Stripe Express Checkout integration
+ * Displays payment buttons like Apple Pay, Google Pay, etc based on browser/device
+ * Handles payment flow from button click through confirmation
+ */
 export default function ExpressCheckout({ orderDetails }: ExpressCheckoutProps) {
-  // Initialize Stripe hooks and state
+  // Get Next.js router for redirecting after payment
   const router = useRouter()
-  const stripe = useStripe() as Stripe
-  const elements = useElements() as StripeElements
-  const [errorMessage, setErrorMessage] = useState('')
+  
+  // Get Stripe hooks - stripe is the main Stripe instance, elements manages UI components
+  const stripe = useStripe()
+  const elements = useElements()
+  
+  // Track payment processing state and any error messages
   const [isProcessing, setIsProcessing] = useState(false)
-  const expressCheckoutRef = useRef<StripeExpressCheckoutElement | null>(null)
+  const [errorMessage, setErrorMessage] = useState('')
 
-  // Helper to calculate all amounts in cents
-  const calculateAmounts = useCallback(() => {
+  /**
+   * Creates a PaymentIntent on our server
+   * PaymentIntent tracks the payment lifecycle and tells Stripe how much to charge
+   * Returns client secret needed to confirm payment on frontend
+   */
+  const createPaymentIntent = async () => {
+    // Convert all amounts to cents since Stripe requires integer amounts
     const subtotalAmount = Math.round(orderDetails.subtotal * 100)
     const discountAmount = Math.round(orderDetails.discount * 100)
     const taxAmount = Math.round(orderDetails.tax * 100)
+    // Ensure minimum charge of 50 cents
     const finalAmount = Math.max(subtotalAmount - discountAmount + taxAmount, 50)
 
-    return {
-      subtotalAmount,
-      discountAmount,
-      taxAmount,
-      finalAmount
-    }
-  }, [orderDetails])
-
-  // Create a new payment intent with the server
-  const createPaymentIntent = async () => {
-    try {
-      const { finalAmount } = calculateAmounts()
-
-      const response = await fetch('/api/checkout/create-payment-intent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: finalAmount,
-          currency: 'usd',
-          orderDetails
-        }),
+    // Call our API endpoint to create the PaymentIntent
+    const response = await fetch('/api/checkout/create-payment-intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        amount: finalAmount,
+        currency: 'usd',
+        orderDetails
       })
+    })
 
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'Failed to create payment intent')
-      }
-
-      const data = await response.json()
-      return data.clientSecret
-    } catch (error) {
-      console.error('Payment intent error:', error)
-      throw new Error('Payment initialization failed')
+    const data = await response.json()
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to create payment intent')
     }
+
+    return data.clientSecret
   }
-
-  // Called when Express Checkout sheet is about to open
-  const handleClick = async (event: StripeExpressCheckoutElementClickEvent) => {
-    try {
-      const { subtotalAmount, discountAmount, taxAmount, finalAmount } = calculateAmounts()
-
-      // Build line items for the payment sheet
-      const lineItems = [
-        {
-          name: 'Better Bowls Order',
-          amount: subtotalAmount
-        }
-      ]
-
-      if (orderDetails.discount > 0) {
-        lineItems.push({
-          name: `Discount (${orderDetails.promoCode})`,
-          amount: -discountAmount
-        })
-      }
-
-      lineItems.push({
-        name: 'Tax',
-        amount: taxAmount
-      })
-
-      // Verify line items sum matches total
-      const lineItemsTotal = lineItems.reduce((sum, item) => sum + item.amount, 0)
-      if (lineItemsTotal !== finalAmount) {
-        console.error('Amount mismatch:', { lineItemsTotal, finalAmount })
-        throw new Error('Amount calculation mismatch')
-      }
-
-      // Configure and open payment sheet
-      event.resolve({
-        phoneNumberRequired: true,
-        emailRequired: false,
-        shippingAddressRequired: false,
-        billingAddressRequired: false,
-        lineItems,
-        total: {
-          label: 'Total',
-          amount: finalAmount
-        }
-      } as ExpressCheckoutClickResolveDetails)
-    } catch (error) {
-      console.error('Error in click handler:', error)
-      setErrorMessage('Failed to open payment sheet')
-    }
-  }
-
-  // Called when payment is confirmed in Express Checkout sheet
-  const handleConfirm = async (event: StripeExpressCheckoutElementConfirmEvent) => {
-    if (!stripe || !elements || isProcessing) return
-
-    try {
-      setIsProcessing(true)
-      setErrorMessage('')
-
-      // Submit form data to Stripe
-      const { error: submitError } = await elements.submit()
-      if (submitError) throw submitError
-
-      // Create payment intent and get client secret
-      const clientSecret = await createPaymentIntent()
-
-      // Confirm the payment with Stripe
-      const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
-        elements,
-        clientSecret,
-        redirect: 'if_required'
-      })
-
-      if (confirmError) throw confirmError
-
-      // Handle successful payment
-      if (paymentIntent.status === 'succeeded') {
-        // Store order and send confirmation in parallel
-        await Promise.all([
-          fetch('/api/checkout/store-order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              orderId: paymentIntent.id,
-              orderDetails,
-              status: 'confirmed'
-            })
-          }),
-          fetch('/api/checkout/send-confirmation', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              phone: orderDetails.customerInfo.phone,
-              orderId: paymentIntent.id
-            })
-          })
-        ])
-
-        router.push(`/order/confirmation?orderId=${paymentIntent.id}`)
-      }
-    } catch (error) {
-      console.error('Payment error:', error)
-      setErrorMessage(error instanceof Error ? error.message : 'Payment failed')
-    } finally {
-      setIsProcessing(false)
-    }
-  }
-
-  // Create and mount Express Checkout Element
-  useEffect(() => {
-    if (!elements || isProcessing) return
-
-    try {
-      // Create element instance
-      const expressCheckout = elements.create('expressCheckout')
-      
-      // Add event listeners
-      expressCheckout.on('click', handleClick)
-      expressCheckout.on('confirm', handleConfirm)
-
-      // Mount to DOM
-      const mountElement = document.getElementById('express-checkout-container')
-      if (mountElement) {
-        expressCheckout.mount(mountElement)
-        expressCheckoutRef.current = expressCheckout
-      }
-
-      // Cleanup on unmount
-      return () => {
-        expressCheckout.destroy()
-        expressCheckoutRef.current = null
-      }
-    } catch (error) {
-      console.error('Error creating Express Checkout:', error)
-      setErrorMessage('Failed to initialize payment')
-    }
-  }, [elements, isProcessing])
 
   return (
     <div className="space-y-4">
-      {/* Express Checkout mount point */}
+      {/* Only show payment buttons when not actively processing a payment */}
       {!isProcessing && (
-        <div id="express-checkout-container" className="w-full" />
+        <ExpressCheckoutElement
+          // Re-render element when total or promo code changes
+          key={`${orderDetails.total}-${orderDetails.promoCode}`}
+          
+          // Handle successful payment authorization from customer
+          onConfirm={async (event) => {
+            if (!stripe || !elements) return
+
+            try {
+              setIsProcessing(true)
+              setErrorMessage('')
+
+              // Submit the form data to Stripe for validation
+              const { error: submitError } = await elements.submit()
+              if (submitError) throw submitError
+
+              // Get PaymentIntent client secret from our server
+              const clientSecret = await createPaymentIntent()
+
+              // Confirm the payment with Stripe
+              const { error, paymentIntent } = await stripe.confirmPayment({
+                elements,
+                clientSecret,
+                redirect: 'if_required' // Only redirect if 3D Secure is needed
+              })
+
+              if (error) throw error
+
+              // Payment was successful
+              if (paymentIntent.status === 'succeeded') {
+                // Store order details and send confirmation SMS in parallel
+                await Promise.all([
+                  // Save order to our database
+                  fetch('/api/checkout/store-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      orderId: paymentIntent.id,
+                      orderDetails,
+                      status: 'confirmed'
+                    })
+                  }),
+                  // Send confirmation SMS to customer
+                  fetch('/api/checkout/send-confirmation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      phone: orderDetails.customerInfo.phone,
+                      orderId: paymentIntent.id
+                    })
+                  })
+                ])
+
+                // Redirect to order confirmation page
+                router.push(`/order/confirmation?orderId=${paymentIntent.id}`)
+              }
+            } catch (error) {
+              console.error('Payment error:', error)
+              setErrorMessage(error instanceof Error ? error.message : 'Payment failed')
+            } finally {
+              setIsProcessing(false)
+            }
+          }}
+
+          // Configure the payment sheet that appears when customer clicks a payment button
+          onClick={(event) => {
+            // Calculate amounts in cents
+            const subtotalAmount = Math.round(orderDetails.subtotal * 100)
+            const discountAmount = Math.round(orderDetails.discount * 100)
+            const taxAmount = Math.round(orderDetails.tax * 100)
+            const finalAmount = Math.max(subtotalAmount - discountAmount + taxAmount, 50)
+
+            // Build line items to show in payment sheet
+            const lineItems = [
+              {
+                name: 'Better Bowls Order',
+                amount: subtotalAmount
+              },
+              // Only include discount line item if there is one
+              ...(orderDetails.discount > 0 ? [{
+                name: `Discount (${orderDetails.promoCode})`,
+                amount: -discountAmount
+              }] : []),
+              {
+                name: 'Tax',
+                amount: taxAmount
+              }
+            ]
+
+            // Verify line items sum matches final amount to prevent errors
+            const lineItemsTotal = lineItems.reduce((sum, item) => sum + item.amount, 0)
+            if (lineItemsTotal !== finalAmount) {
+              console.error('Amount mismatch:', { lineItemsTotal, finalAmount })
+              setErrorMessage('Amount calculation error')
+              // Note: event.reject() is deprecated, should handle error differently
+              return
+            }
+
+            // Configure payment sheet display
+            event.resolve({
+              business: { name: 'Better Bowls' },
+              phoneNumberRequired: true,
+              emailRequired: false,
+            })
+          }}
+        />
       )}
-      
-      {/* Error message */}
+
+      {/* Display any error messages */}
       {errorMessage && (
         <p className="text-red-500 text-center">{errorMessage}</p>
       )}
-      
-      {/* Loading indicator */}
+
+      {/* Show loading spinner while processing payment */}
       {isProcessing && (
         <div className="text-center space-y-2">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-900 mx-auto" />
@@ -242,4 +184,4 @@ export default function ExpressCheckout({ orderDetails }: ExpressCheckoutProps) 
       )}
     </div>
   )
-} 
+}
