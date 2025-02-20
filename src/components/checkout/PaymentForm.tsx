@@ -27,7 +27,8 @@ export default function PaymentForm({ orderDetails }: PaymentFormProps) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         amount: orderDetails.total,
-        orderId: Date.now().toString()
+        orderId: Date.now().toString(),
+        promoCode: orderDetails.promoCode
       })
     })
 
