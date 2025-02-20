@@ -16,8 +16,11 @@ export async function POST(req: Request) {
     const body = await req.json() as RequestBody
     const { amount, orderId, promoCode } = body
 
-    // Apply discount if promo code exists
-    const finalAmount = promoCode ? amount * 0.8 : amount // 20% discount
+    // Apply appropriate discount
+    const finalAmount = promoCode?.toLowerCase() === 'stripetesting'
+      ? amount * 0.01  // 99% off for testing
+      : promoCode ? amount * 0.8  // Regular 20% discount
+      : amount
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(finalAmount * 100),

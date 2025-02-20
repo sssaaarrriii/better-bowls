@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, Suspense, useMemo } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { loadStripe } from '@stripe/stripe-js'
 import OrderSummary from '@/components/checkout/order-summary'
@@ -40,20 +40,74 @@ function CheckoutContent() {
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null)
   const [promoApplied, setPromoApplied] = useState(false)
   const [promoCode, setPromoCode] = useState('')
+  const [currentTotal, setCurrentTotal] = useState(0)
 
   const selectedEvent = JSON.parse(localStorage.getItem('selectedEvent') || '{}')
   const customerInfo = JSON.parse(localStorage.getItem('customerInfo') || '{}')
 
+  // Move calculateOrderDetails definition before its usage
+  const calculateOrderDetails = useMemo(() => {
+    return () => {
+      if (!orderDetails) return {
+        items: [],
+        subtotal: 0,
+        discount: 0,
+        tax: 0,
+        total: 0,
+        customerInfo: {
+          name: '',
+          phone: ''
+        }
+      }
+
+      const items = orderDetails.items.map(item => ({
+        ...item,
+        size: item.size || 'Regular',
+        toppings: item.toppings || {}
+      }))
+
+      const subtotal = items[0].price
+      const discount = promoApplied 
+        ? promoCode.toLowerCase() === 'stripetesting'
+          ? subtotal * 0.99
+          : subtotal * 0.2
+        : 0
+      const tax = (subtotal - discount) * 0.095
+      const total = subtotal - discount + tax
+
+      return {
+        items,
+        subtotal,
+        discount,
+        tax,
+        total,
+        customerInfo: orderDetails.customerInfo,
+        promoCode: promoCode
+      }
+    }
+  }, [orderDetails, promoApplied, promoCode])
+
+  // Memoize the calculated order details
+  const calculatedOrderDetails = useMemo(() => 
+    calculateOrderDetails(), 
+    [calculateOrderDetails]
+  )
+
+  // Move useEffects after the function definitions
   useEffect(() => {
-    // Load order details from localStorage
     const savedOrder = localStorage.getItem('currentOrder')
     if (savedOrder) {
       const order = JSON.parse(savedOrder)
       setOrderDetails(order)
-      
-      console.log('Creating payment intent for amount:', order.total)  // Debug log
     }
   }, [])
+
+  useEffect(() => {
+    if (orderDetails) {
+      const details = calculateOrderDetails()
+      setCurrentTotal(details.total)
+    }
+  }, [orderDetails, promoApplied, promoCode, calculateOrderDetails])
 
   // Add debug log for clientSecret
   console.log('Stripe initialized:', !!stripePromise)
@@ -69,6 +123,7 @@ function CheckoutContent() {
     }
   }, [router]);
 
+<<<<<<< HEAD
   const calculateOrderDetails = () => {
     if (!orderDetails) return {
       items: [],
@@ -110,11 +165,13 @@ function CheckoutContent() {
     }
   }
 
+=======
+>>>>>>> 41faac60c51b273f43298786ba73416f00c83fae
   const handlePromoCode = async (code: string) => {
     const validCodes = ['pvolve20', 'solidcore20', 'stripetesting']
     if (validCodes.includes(code.toLowerCase())) {
-      setPromoApplied(true)
       setPromoCode(code)
+      setPromoApplied(true)
       return true
     }
     return false
@@ -124,7 +181,7 @@ function CheckoutContent() {
     <div className="max-w-2xl mx-auto p-4 pt-32 space-y-6">
       <h1 className="font-recoleta text-3xl mb-6">Checkout</h1>
       
-      <OrderSummary orderDetails={calculateOrderDetails()} />
+      <OrderSummary orderDetails={calculatedOrderDetails} />
       
       <div className="bg-white rounded-lg shadow p-6">
         <PromoCode onApply={handlePromoCode} />
@@ -140,6 +197,7 @@ function CheckoutContent() {
         pickupTime={customerInfo.classTime}
       />
       
+<<<<<<< HEAD
       <Elements 
         stripe={stripePromise} 
         options={{
@@ -152,6 +210,24 @@ function CheckoutContent() {
       >
         <PaymentForm orderDetails={calculateOrderDetails()} />
       </Elements>
+=======
+      {orderDetails && (
+        <Elements 
+          key="stripe-element"
+          stripe={stripePromise} 
+          options={{
+            mode: 'payment',
+            amount: Math.round(calculatedOrderDetails.total * 100),
+            currency: 'usd',
+            appearance: { theme: 'stripe' }
+          }}
+        >
+          <PaymentForm 
+            orderDetails={calculatedOrderDetails} 
+          />
+        </Elements>
+      )}
+>>>>>>> 41faac60c51b273f43298786ba73416f00c83fae
       
       {error && (
         <p className="text-red-500 text-center">{error}</p>

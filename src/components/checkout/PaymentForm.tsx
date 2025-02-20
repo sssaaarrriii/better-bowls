@@ -65,6 +65,7 @@ export default function PaymentForm({ orderDetails }: PaymentFormProps) {
       setIsProcessing(true)
       setErrorMessage('')
 
+<<<<<<< HEAD
       const { error: submitError } = await elements.submit()
       if (submitError) {
         throw new Error(submitError.message ?? 'Error submitting payment')
@@ -76,6 +77,15 @@ export default function PaymentForm({ orderDetails }: PaymentFormProps) {
         elements,
         clientSecret,
         redirect: 'if_required',
+=======
+    const res = await fetch('/api/create-payment-intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        amount: orderDetails.total,
+        orderId: Date.now().toString(),
+        promoCode: orderDetails.promoCode
+>>>>>>> 41faac60c51b273f43298786ba73416f00c83fae
       })
 
       if (confirmError) {
