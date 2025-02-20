@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useState, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import OrderSummary from '@/components/checkout/order-summary'
 import type { OrderDetails } from '@/app/checkout/page'
 
 function ConfirmationContent() {
+  const router = useRouter()
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null)
   const searchParams = useSearchParams()
 
@@ -14,8 +15,13 @@ function ConfirmationContent() {
     const savedOrder = localStorage.getItem('currentOrder')
     if (savedOrder) {
       setOrderDetails(JSON.parse(savedOrder))
+      // Clear cart after successful payment
+      localStorage.removeItem('currentOrder')
+    } else {
+      // If no order details, redirect to home
+      router.push('/')
     }
-  }, [])
+  }, [router])
 
   return (
     <div className="max-w-2xl mx-auto p-4 pt-32">

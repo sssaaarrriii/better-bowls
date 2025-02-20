@@ -39,7 +39,6 @@ function CheckoutContent() {
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null)
   const [promoApplied, setPromoApplied] = useState(false)
   const [promoCode, setPromoCode] = useState('')
-  const [clientSecret, setClientSecret] = useState('')
 
   const selectedEvent = JSON.parse(localStorage.getItem('selectedEvent') || '{}')
   const customerInfo = JSON.parse(localStorage.getItem('customerInfo') || '{}')
@@ -52,31 +51,10 @@ function CheckoutContent() {
       setOrderDetails(order)
       
       console.log('Creating payment intent for amount:', order.total)  // Debug log
-
-      // Create PaymentIntent
-      fetch('/api/create-payment-intent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: order.total,
-          orderId: Date.now().toString(),
-          promoCode: promoCode
-        })
-      })
-      .then(res => res.json())
-      .then(data => {
-        console.log('Payment Intent response:', data)  // Debug log
-        setClientSecret(data.clientSecret)
-      })
-      .catch(err => {
-        console.error('Payment Intent error:', err)  // Debug log
-        setError('Error creating payment. Please try again.')
-      })
     }
-  }, [promoCode])  // Add promoCode dependency
+  }, [])
 
   // Add debug log for clientSecret
-  console.log('Current clientSecret:', clientSecret)
   console.log('Stripe initialized:', !!stripePromise)
 
   useEffect(() => {
@@ -86,8 +64,6 @@ function CheckoutContent() {
     const payment_intent_client_secret = query.get('payment_intent_client_secret');
 
     if (payment_intent && payment_intent_client_secret) {
-      // Handle successful payment here
-      // You might want to redirect to a success page
       router.push('/order/confirmation');
     }
   }, [router]);
@@ -161,23 +137,18 @@ function CheckoutContent() {
         pickupTime={customerInfo.classTime}
       />
       
-      {clientSecret ? (
-        <div className="bg-white rounded-lg shadow p-6">
-          <Elements 
-            stripe={stripePromise} 
-            options={{
-              clientSecret,
-              appearance: { theme: 'stripe' },
-            }}
-          >
-            <PaymentForm orderDetails={orderDetails!} />
-          </Elements>
-        </div>
-      ) : (
-        <div className="text-center text-gray-500">
-          Loading payment form...
-        </div>
-      )}
+      <Elements 
+        key={calculateOrderDetails().total}
+        stripe={stripePromise} 
+        options={{
+          mode: 'payment',
+          amount: Math.round(calculateOrderDetails().total * 100),
+          currency: 'usd',
+          appearance: { theme: 'stripe' }
+        }}
+      >
+        <PaymentForm orderDetails={orderDetails!} />
+      </Elements>
       
       {error && (
         <p className="text-red-500 text-center">{error}</p>

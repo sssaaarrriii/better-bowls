@@ -1,72 +1,80 @@
 'use client'
 
 import { useState } from 'react'
-import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js'
-import { Button } from '@/components/ui/button'
+import { useStripe, useElements, ExpressCheckoutElement } from '@stripe/react-stripe-js'
 import type { OrderDetails } from '@/app/checkout/page'
 
 interface PaymentFormProps {
-  orderDetails: OrderDetails & {
-    customerInfo: {
-      name: string;
-      phone: string;
-    };
-  };
+  orderDetails: OrderDetails
 }
 
 export default function PaymentForm({ orderDetails }: PaymentFormProps) {
   const stripe = useStripe()
   const elements = useElements()
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [error, setError] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const onConfirm = async () => {
     if (!stripe || !elements) return
 
-    setIsProcessing(true)
-    setError('')
+    const { error: submitError } = await elements.submit()
+    if (submitError) {
+      setErrorMessage(submitError.message ?? 'Error submitting payment')
+      return
+    }
 
-    try {
-      const { error: submitError } = await elements.submit()
-      if (submitError) throw submitError
+    const res = await fetch('/api/create-payment-intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        amount: orderDetails.total,
+        orderId: Date.now().toString()
+      })
+    })
 
-      const { error: paymentError } = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-          return_url: `${window.location.origin}/order/confirmation`,
-          payment_method_data: {
-            billing_details: {
-              name: orderDetails.customerInfo.name,
-              phone: orderDetails.customerInfo.phone,
-            }
+    if (!res.ok) {
+      setErrorMessage('Payment failed. Please try again.')
+      return
+    }
+
+    const { client_secret: clientSecret } = await res.json()
+
+    const { error } = await stripe.confirmPayment({
+      elements,
+      clientSecret,
+      confirmParams: {
+        return_url: `${window.location.origin}/order/confirmation`,
+        payment_method_data: {
+          billing_details: {
+            name: orderDetails.customerInfo.name,
+            phone: orderDetails.customerInfo.phone
           }
         }
-      })
+      }
+    })
 
-      if (paymentError) throw paymentError
-    } catch (err: any) {
-      setError(err.message || 'Payment failed')
-    } finally {
-      setIsProcessing(false)
+    if (error) {
+      setErrorMessage(error.message ?? 'Payment failed')
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <PaymentElement />
-      
-      <Button
-        type="submit"
-        disabled={!stripe || isProcessing}
-        fullWidth
-      >
-        {isProcessing ? 'Processing...' : 'Pay now'}
-      </Button>
-      
-      {error && (
-        <p className="text-red-500 text-center">{error}</p>
+    <div className="space-y-4">
+      <ExpressCheckoutElement 
+        onConfirm={onConfirm}
+        onClick={({ resolve }) => {
+          resolve({
+            emailRequired: true,
+            phoneNumberRequired: true,
+            lineItems: [{
+              name: orderDetails.items[0].name,
+              amount: Math.round(orderDetails.total * 100)
+            }]
+          })
+        }}
+      />
+      {errorMessage && (
+        <p className="text-red-500 text-center">{errorMessage}</p>
       )}
-    </form>
+    </div>
   )
 } 
