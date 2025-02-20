@@ -45,7 +45,7 @@ function CheckoutContent() {
   const selectedEvent = JSON.parse(localStorage.getItem('selectedEvent') || '{}')
   const customerInfo = JSON.parse(localStorage.getItem('customerInfo') || '{}')
 
-  // Move calculateOrderDetails definition before its usage
+  // Calculate order details with memoization
   const calculateOrderDetails = useMemo(() => {
     return () => {
       if (!orderDetails) return {
@@ -69,7 +69,7 @@ function CheckoutContent() {
       const subtotal = items[0].price
       const discount = promoApplied 
         ? promoCode.toLowerCase() === 'stripetesting'
-          ? subtotal * 0.99
+          ? subtotal * 0.90 // Changed to 90% off
           : subtotal * 0.2
         : 0
       const tax = (subtotal - discount) * 0.095
@@ -87,13 +87,12 @@ function CheckoutContent() {
     }
   }, [orderDetails, promoApplied, promoCode])
 
-  // Memoize the calculated order details
+  // Memoize calculated order details
   const calculatedOrderDetails = useMemo(() => 
     calculateOrderDetails(), 
     [calculateOrderDetails]
   )
 
-  // Move useEffects after the function definitions
   useEffect(() => {
     const savedOrder = localStorage.getItem('currentOrder')
     if (savedOrder) {
@@ -109,64 +108,16 @@ function CheckoutContent() {
     }
   }, [orderDetails, promoApplied, promoCode, calculateOrderDetails])
 
-  // Add debug log for clientSecret
-  console.log('Stripe initialized:', !!stripePromise)
-
   useEffect(() => {
-    // Check to see if this is a redirect back from Stripe
-    const query = new URLSearchParams(window.location.search);
-    const payment_intent = query.get('payment_intent');
-    const payment_intent_client_secret = query.get('payment_intent_client_secret');
+    const query = new URLSearchParams(window.location.search)
+    const payment_intent = query.get('payment_intent')
+    const payment_intent_client_secret = query.get('payment_intent_client_secret')
 
     if (payment_intent && payment_intent_client_secret) {
-      router.push('/order/confirmation');
+      router.push('/order/confirmation')
     }
-  }, [router]);
+  }, [router])
 
-<<<<<<< HEAD
-  const calculateOrderDetails = () => {
-    if (!orderDetails) return {
-      items: [],
-      subtotal: 0,
-      discount: 0,
-      tax: 0,
-      total: 0,
-      customerInfo: {
-        name: '',
-        phone: ''
-      },
-      promoCode: ''
-    }
-
-    // Ensure items have size and toppings from localStorage
-    const items = orderDetails.items.map(item => ({
-      ...item,
-      size: item.size || 'Regular',
-      toppings: item.toppings || {}
-    }))
-
-    const subtotal = items[0].price
-    const discount = promoApplied 
-      ? promoCode.toLowerCase() === 'stripetesting'
-        ? subtotal * 0.99  // 99% off for testing
-        : subtotal * 0.2   // Regular 20% off
-      : 0
-    const tax = (subtotal - discount) * 0.095
-    const total = subtotal - discount + tax
-
-    return {
-      items,
-      subtotal,
-      discount,
-      tax,
-      total,
-      customerInfo: orderDetails.customerInfo,
-      promoCode: promoCode
-    }
-  }
-
-=======
->>>>>>> 41faac60c51b273f43298786ba73416f00c83fae
   const handlePromoCode = async (code: string) => {
     const validCodes = ['pvolve20', 'solidcore20', 'stripetesting']
     if (validCodes.includes(code.toLowerCase())) {
@@ -197,37 +148,18 @@ function CheckoutContent() {
         pickupTime={customerInfo.classTime}
       />
       
-<<<<<<< HEAD
       <Elements 
         stripe={stripePromise} 
         options={{
           mode: 'payment',
-          amount: Math.round(calculateOrderDetails().total * 100),
+          amount: Math.round(calculatedOrderDetails.total * 100),
           currency: 'usd',
           appearance: { theme: 'stripe' },
           paymentMethodTypes: ['card', 'link'],
         }}
       >
-        <PaymentForm orderDetails={calculateOrderDetails()} />
+        <PaymentForm orderDetails={calculatedOrderDetails} />
       </Elements>
-=======
-      {orderDetails && (
-        <Elements 
-          key="stripe-element"
-          stripe={stripePromise} 
-          options={{
-            mode: 'payment',
-            amount: Math.round(calculatedOrderDetails.total * 100),
-            currency: 'usd',
-            appearance: { theme: 'stripe' }
-          }}
-        >
-          <PaymentForm 
-            orderDetails={calculatedOrderDetails} 
-          />
-        </Elements>
-      )}
->>>>>>> 41faac60c51b273f43298786ba73416f00c83fae
       
       {error && (
         <p className="text-red-500 text-center">{error}</p>
@@ -236,15 +168,9 @@ function CheckoutContent() {
   )
 }
 
-export default function CheckoutPage() {
+export default function Checkout() {
   return (
-    <Suspense 
-      fallback={
-        <div className="max-w-2xl mx-auto p-4">
-          <h1 className="font-recoleta text-3xl mb-6">Loading Checkout...</h1>
-        </div>
-      }
-    >
+    <Suspense fallback={<div>Loading...</div>}>
       <CheckoutContent />
     </Suspense>
   )
