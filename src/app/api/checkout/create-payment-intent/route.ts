@@ -55,9 +55,8 @@ export async function POST(req: Request) {
       currency: 'usd',
       automatic_payment_methods: {
         enabled: true,
-        allow_redirects: 'never'
+        allow_redirects: 'always'
       },
-      payment_method_types: ['card', 'apple_pay'],
       payment_method_options: {
         card: {
           request_three_d_secure: 'automatic'

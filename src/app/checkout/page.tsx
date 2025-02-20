@@ -162,7 +162,6 @@ function CheckoutContent() {
     }
     return false
   }
-
   const options: StripeElementsOptions = {
     mode: 'payment',
     amount: Math.max(50, Math.round((calculatedOrderDetails.subtotal - calculatedOrderDetails.discount + calculatedOrderDetails.tax) * 100)),
