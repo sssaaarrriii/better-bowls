@@ -1,97 +1,51 @@
 import { NextResponse } from 'next/server'
-import { headers } from 'next/headers'
-import Stripe from 'stripe'
-import { updateOrderStatus } from '@/lib/api/airtable'
-import { sendOrderConfirmation } from '@/lib/api/twilio'
+import { stripe, PaymentError } from '@/lib/api/stripe'
+import type Stripe from 'stripe'
 
-// Initialize Stripe with error handling
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('Missing STRIPE_SECRET_KEY')
-}
-
+// Validate webhook secret at startup
 if (!process.env.STRIPE_WEBHOOK_SECRET) {
   throw new Error('Missing STRIPE_WEBHOOK_SECRET')
 }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY! as any, {
-  apiVersion: '2023-10-16' as any
-})
-
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
 export async function POST(req: Request) {
   try {
     const body = await req.text()
-    const headersList = headers()
-    const signature = headersList.get('stripe-signature')
+    const signature = req.headers.get('stripe-signature')
 
     if (!signature) {
       return NextResponse.json(
-        { error: 'Missing stripe-signature header' },
+        { error: 'Missing signature' },
         { status: 400 }
       )
     }
 
-    // Verify webhook signature
-    let event: Stripe.Event
-    try {
-      event = stripe.webhooks.constructEvent(
-        body,
-        signature,
-        webhookSecret
-      )
-    } catch (err) {
-      console.error('Webhook signature verification failed:', err)
-      return NextResponse.json(
-        { error: 'Invalid signature' },
-        { status: 400 }
-      )
-    }
+    // Verify webhook
+    const event = stripe.webhooks.constructEvent(
+      body,
+      signature,
+      webhookSecret
+    ) as Stripe.Event
 
-    // Handle webhook events
+    // Handle events
     switch (event.type) {
       case 'payment_intent.succeeded': {
         const paymentIntent = event.data.object as Stripe.PaymentIntent
-        
-        try {
-          // Add payment method info to logs
-          console.log('Payment succeeded:', {
-            id: paymentIntent.id,
-            amount: paymentIntent.amount,
-            payment_method_types: paymentIntent.payment_method_types,
-            payment_method: paymentIntent.payment_method
-          })
-
-          await Promise.all([
-            updateOrderStatus(paymentIntent.id, 'confirmed'),
-            sendOrderConfirmation(
-              paymentIntent.metadata.customerPhone,
-              {
-                id: paymentIntent.id,
-                pickupTime: paymentIntent.metadata.pickupTime || 'Not specified',
-                location: paymentIntent.metadata.pickupLocation || 'Default location'
-              }
-            )
-          ])
-        } catch (error) {
-          console.error('Post-payment processing error:', error)
-        }
+        console.log('💰 Payment succeeded:', {
+          id: paymentIntent.id,
+          amount: paymentIntent.amount,
+          metadata: paymentIntent.metadata
+        })
         break
       }
 
       case 'payment_intent.payment_failed': {
         const paymentIntent = event.data.object as Stripe.PaymentIntent
-        console.error('Payment failed:', {
+        console.error('❌ Payment failed:', {
           id: paymentIntent.id,
-          error: paymentIntent.last_payment_error,
-          payment_method_types: paymentIntent.payment_method_types
+          error: paymentIntent.last_payment_error
         })
-        break
-      }
-
-      // Add handling for express checkout specific events
-      case 'payment_method.attached': {
-        console.log('Payment method attached:', event.data.object)
         break
       }
     }
@@ -101,8 +55,8 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error('Webhook error:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Webhook handler failed' },
-      { status: 500 }
+      { error: 'Webhook failed' },
+      { status: 400 }
     )
   }
 } 

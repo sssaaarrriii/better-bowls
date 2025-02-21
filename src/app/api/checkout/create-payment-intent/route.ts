@@ -1,90 +1,63 @@
 import { NextResponse } from 'next/server'
-import Stripe from 'stripe'
-import { formatCurrency } from '@/lib/utils'
-import type { OrderDetails } from '@/app/checkout/page'
+import { 
+  stripe, 
+  OrderDetails, 
+  validateOrderAmounts, 
+  formatAmountForStripe 
+} from '@/lib/api/stripe'
 
-// Initialize Stripe with error handling
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('Missing STRIPE_SECRET_KEY')
-}
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16' as any
-})
-
+// Define expected request body type
 interface CreatePaymentIntentRequest {
-  amount: number
-  currency: string
   orderDetails: OrderDetails
 }
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json() as CreatePaymentIntentRequest
-    const { amount, orderDetails } = body
+    const body = await req.json()
+    const { orderDetails } = body as { orderDetails: OrderDetails }
 
-    // Validate request
-    if (!amount || amount < 50) {
+    // Validate order details
+    if (!validateOrderAmounts(orderDetails)) {
       return NextResponse.json(
-        { error: 'Amount must be at least 50 cents' },
+        { error: 'Invalid order amounts' },
         { status: 400 }
       )
     }
 
-    if (!orderDetails?.customerInfo?.phone) {
-      return NextResponse.json(
-        { error: 'Customer phone number is required' },
-        { status: 400 }
-      )
-    }
+    // Calculate final amount
+    const subtotalAmount = formatAmountForStripe(orderDetails.subtotal)
+    const discountAmount = formatAmountForStripe(orderDetails.discount)
+    const taxAmount = formatAmountForStripe(orderDetails.tax)
+    const finalAmount = Math.max(
+      subtotalAmount - discountAmount + taxAmount,
+      50 // Minimum 50 cents
+    )
 
-    if (!orderDetails?.items?.length) {
-      return NextResponse.json(
-        { error: 'Order must contain items' },
-        { status: 400 }
-      )
-    }
-
-    // Validate and adjust amount
-    const minAmount = 50; // 50 cents minimum
-    const adjustedAmount = Math.max(minAmount, amount);
-
-    // Create payment intent with Express Checkout settings
+    // Create PaymentIntent
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: adjustedAmount,
+      amount: finalAmount,
       currency: 'usd',
+      // Enable automatic payment methods
       automatic_payment_methods: {
-        enabled: true,
-        allow_redirects: 'always'
-      },
-      payment_method_options: {
-        card: {
-          request_three_d_secure: 'automatic'
-        }
+        enabled: true
       },
       metadata: {
         customerName: orderDetails.customerInfo.name,
         customerPhone: orderDetails.customerInfo.phone,
-        subtotal: formatCurrency(orderDetails.subtotal),
-        discount: formatCurrency(orderDetails.discount),
-        tax: formatCurrency(orderDetails.tax),
-        total: formatCurrency(orderDetails.total),
-        promoCode: orderDetails.promoCode || 'none',
         pickupLocation: orderDetails.pickupLocation || '',
         pickupTime: orderDetails.pickupTime || '',
-        itemCount: orderDetails.items.length.toString()
+        orderTotal: orderDetails.total.toString()
       }
     })
 
-    return NextResponse.json({ 
-      clientSecret: paymentIntent.client_secret,
-      id: paymentIntent.id
+    return NextResponse.json({
+      clientSecret: paymentIntent.client_secret
     })
 
   } catch (error) {
-    console.error('Error creating payment intent:', error)
+    console.error('Create PaymentIntent error:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to create payment intent' },
+      { error: 'Payment setup failed' },
       { status: 500 }
     )
   }

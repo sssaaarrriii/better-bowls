@@ -1,19 +1,40 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
-export default function OrderConfirmation() {
+function ConfirmationContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    // Check payment status
+    const checkPayment = async () => {
+      const payment_intent = searchParams.get('payment_intent')
+      
+      if (!payment_intent) {
+        router.push('/')
+        return
+      }
+
+      setIsLoading(false)
+    }
+
+    checkPayment()
+
+    // Redirect after 5 seconds
     const timer = setTimeout(() => {
       router.push('/')
     }, 5000)
 
     return () => clearTimeout(timer)
-  }, [router])
+  }, [router, searchParams])
+
+  if (isLoading) {
+    return <div>Verifying payment...</div>
+  }
 
   return (
     <div className="container mx-auto px-4 py-12 text-center">
@@ -35,5 +56,14 @@ export default function OrderConfirmation() {
         Redirecting to home page in 5 seconds...
       </p>
     </div>
+  )
+}
+
+// Wrap the page content in Suspense
+export default function OrderConfirmation() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ConfirmationContent />
+    </Suspense>
   )
 } 
