@@ -7,33 +7,53 @@ import Link from 'next/link'
 function ConfirmationContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [isLoading, setIsLoading] = useState(true)
+  const [status, setStatus] = useState<'success' | 'processing' | 'error'>('processing')
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    // Check payment status
     const checkPayment = async () => {
       const payment_intent = searchParams.get('payment_intent')
-      
-      if (!payment_intent) {
+      const payment_intent_client_secret = searchParams.get('payment_intent_client_secret')
+      const redirect_status = searchParams.get('redirect_status')
+
+      if (!payment_intent || !payment_intent_client_secret) {
         router.push('/')
         return
       }
 
-      setIsLoading(false)
+      if (redirect_status === 'succeeded') {
+        setStatus('success')
+      } else if (redirect_status === 'failed') {
+        setStatus('error')
+        setError('Payment failed. Please try again.')
+      }
     }
 
     checkPayment()
 
-    // Redirect after 5 seconds
-    const timer = setTimeout(() => {
-      router.push('/')
-    }, 5000)
+    // Only redirect on success
+    if (status === 'success') {
+      const timer = setTimeout(() => {
+        router.push('/')
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [router, searchParams, status])
 
-    return () => clearTimeout(timer)
-  }, [router, searchParams])
-
-  if (isLoading) {
+  if (status === 'processing') {
     return <div>Verifying payment...</div>
+  }
+
+  if (status === 'error') {
+    return (
+      <div className="text-center">
+        <h1 className="text-red-500">Payment Failed</h1>
+        <p>{error}</p>
+        <Link href="/checkout" className="text-blue-500">
+          Try Again
+        </Link>
+      </div>
+    )
   }
 
   return (

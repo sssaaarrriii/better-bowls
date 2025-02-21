@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 
 interface PromoCodeProps {
-  onApply: (code: string) => Promise<boolean>
+  subtotal: number
+  onApplyPromo: (discount: number, code: string) => void
 }
 
-export default function PromoCode({ onApply }: PromoCodeProps) {
+export default function PromoCode({ subtotal, onApplyPromo }: PromoCodeProps) {
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -22,12 +23,22 @@ export default function PromoCode({ onApply }: PromoCodeProps) {
     setSuccess('')
 
     try {
-      const isValid = await onApply(code)
-      if (isValid) {
-        setSuccess('Promo code applied successfully!')
-      } else {
-        setError('Invalid promo code')
+      // Valid promo codes and their discount percentages
+      const validCodes = {
+        'PVOLVE20': 0.20,
+        'SOLIDCORE20': 0.20,
+        'STRIPETESTING': 0.90
       }
+
+      const discount = validCodes[code.toUpperCase()]
+      if (!discount) {
+        setError('Invalid promo code')
+        return
+      }
+
+      const discountAmount = subtotal * discount
+      onApplyPromo(discountAmount, code)
+      setSuccess('Promo code applied successfully!')
     } catch (err) {
       setError('Error applying promo code')
     } finally {

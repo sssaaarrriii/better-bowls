@@ -1,155 +1,246 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import React, { useEffect, useState, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { loadStripe } from '@stripe/stripe-js'
-import { Elements } from '@stripe/react-stripe-js'
+import { Elements, ExpressCheckoutElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import type { StripeElementsOptions } from '@stripe/stripe-js'
 import OrderSummary from '@/components/checkout/order-summary'
 import PickupDetails from '@/components/checkout/pickup-details'
-import ExpressCheckout from '@/components/checkout/ExpressCheckout'
+import PromoCode from '@/components/checkout/promo-code'
 import { OrderDetails, STRIPE_APPEARANCE } from '@/lib/api/stripe'
 import { ErrorBoundary } from 'react-error-boundary'
 
 /**
- * Checkout Flow:
- * 1. User arrives from Order page with data in localStorage
- * 2. Page loads and validates stored data
- * 3. Mounts Stripe Elements with ExpressCheckout
- * 4. When user clicks pay:
- *    - Creates PaymentIntent via API
- *    - Passes clientSecret to ExpressCheckout
- *    - Handles confirmation and redirect
+ * Checkout Page Flow:
+ * 1. Initialize Stripe on page load
+ * 2. Load order details from localStorage
+ * 3. Display order summary and pickup details
+ * 4. Handle promo code application
+ * 5. Mount Stripe Elements for payment
+ * 6. Process payment via ExpressCheckout
  */
 
-// Add debug logging
-console.log('Stripe Key:', !!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+// Initialize Stripe outside component to avoid recreating on every render
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
-console.log('Stripe Promise:', !!stripePromise)
 
-function CheckoutContent() {
+/**
+ * Main Checkout Content Component
+ * Handles order data loading, validation, and payment setup
+ */
+function CheckoutContent({ onAmountChange }: { onAmountChange: (amount: number) => void }) {
+  const stripe = useStripe()
+  const elements = useElements()
   const router = useRouter()
-  const [error, setError] = useState('')
+  const [error, setError] = useState<string>('')
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null)
 
   /**
-   * On mount: Load and validate data from localStorage
-   * This data was set by:
-   * - EventCard: Selected event details
-   * - OrderForm: Customer information
-   * - Order customization: Order items and amounts
+   * Load and validate stored order data on mount
+   * Data sources:
+   * - selectedEvent: Event details (location, time)
+   * - currentOrder: Order items and amounts
+   * - customerInfo: Customer contact details
    */
   useEffect(() => {
-    // Add debug logging
-    console.log('CheckoutContent mounted')
-    
-    const validateStoredData = () => {
+    const loadOrderData = () => {
       try {
-        // Log localStorage contents
-        console.log('localStorage data:', {
-          event: localStorage.getItem('selectedEvent'),
-          order: localStorage.getItem('currentOrder'),
-          customer: localStorage.getItem('customerInfo')
-        })
+        console.log('Loading order data...')
+        const event = JSON.parse(localStorage.getItem('selectedEvent') || '')
+        const order = JSON.parse(localStorage.getItem('currentOrder') || '')
+        const customer = JSON.parse(localStorage.getItem('customerInfo') || '')
 
-        const storedEvent = localStorage.getItem('selectedEvent')
-        const storedOrder = localStorage.getItem('currentOrder')
-        const customerInfo = localStorage.getItem('customerInfo')
-
-        if (!storedEvent || !storedOrder || !customerInfo) {
-          throw new Error('Missing required order data')
-        }
-
-        // Parse and validate
-        const event = JSON.parse(storedEvent)
-        const order = JSON.parse(storedOrder)
-        const customer = JSON.parse(customerInfo)
-
-        console.log('Parsed data:', { event, order, customer })
+        console.log('Loaded data:', { event, order, customer })
 
         if (!event.location || !customer.phone || !order.items?.length) {
           throw new Error('Invalid order data')
         }
 
-        setOrderDetails({
+        const details: OrderDetails = {
           ...order,
           customerInfo: customer,
           pickupLocation: event.location,
           pickupTime: customer.classTime || event.time
-        })
+        }
+
+        console.log('Calculated details:', details)
+        console.log('Total amount:', Math.round(details.total * 100))
+
+        setOrderDetails(details)
+        onAmountChange(Math.round(details.total * 100))
       } catch (error) {
-        console.error('Validation error:', error)
+        console.error('Data validation error:', error)
         router.push('/order')
       }
     }
 
-    validateStoredData()
-  }, [router])
-
-  // Log render
-  console.log('Rendering with orderDetails:', !!orderDetails)
+    loadOrderData()
+  }, [router, onAmountChange])
 
   /**
-   * Configure Stripe Elements options
-   * These options are used by the Elements provider
-   * and passed down to ExpressCheckout
+   * Handle promo code application
+   * Validates code and updates order amounts
    */
-  const options: StripeElementsOptions = {
-    mode: 'payment',
-    amount: orderDetails ? Math.round(orderDetails.total * 100) : 0,
-    currency: 'usd',
-    appearance: STRIPE_APPEARANCE, // Imported from @/lib/api/stripe
+  const handlePromoCode = async (discount: number, code: string) => {
+    if (!orderDetails) return
+    const newDetails = {
+      ...orderDetails,
+      discount,
+      promoCode: code,
+      total: orderDetails.subtotal - discount + orderDetails.tax
+    }
+    setOrderDetails(newDetails)
+    // Update amount when promo code is applied
+    onAmountChange(Math.round(newDetails.total * 100))
   }
 
+  // Handle the click event for Express Checkout
+  const handleClick = ({ resolve }: { resolve: (details: any) => void }) => {
+    if (!orderDetails) return
+
+    resolve({
+      phoneNumberRequired: true,
+      lineItems: orderDetails.items.map(item => ({
+        name: item.name,
+        amount: Math.round(item.price * 100)
+      }))
+    })
+  }
+
+  // Handle the confirmation flow
+  const handleConfirm = async () => {
+    if (!stripe || !elements || !orderDetails) {
+      return
+    }
+
+    try {
+      const { error: submitError } = await elements.submit()
+      if (submitError) {
+        setError(submitError.message || 'Error submitting payment')
+        return
+      }
+
+      // Create PaymentIntent on the server
+      const response = await fetch('/api/checkout/create-payment-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: Math.round(orderDetails.total * 100),
+          orderItems: orderDetails.items,
+          customerInfo: orderDetails.customerInfo
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to create payment')
+      }
+
+      const { clientSecret } = await response.json()
+
+      // Confirm the payment with Stripe
+      const { error } = await stripe.confirmPayment({
+        elements,
+        clientSecret,
+        confirmParams: {
+          return_url: `${window.location.origin}/order/confirmation`,
+        },
+      })
+
+      if (error) {
+        setError(error.message || 'Payment confirmation failed')
+      }
+      // Success case is handled by redirect
+    } catch (error) {
+      console.error('Payment error:', error)
+      setError('Payment processing failed')
+    }
+  }
+
+  if (!orderDetails) {
+    return <div className="p-4">Loading order details...</div>
+  }
+
+  const options: StripeElementsOptions = {
+    mode: 'payment',
+    amount: Math.round(orderDetails.total * 100),
+    currency: 'usd',
+    appearance: STRIPE_APPEARANCE,
+  }
+
+  /**
+   * Render checkout interface
+   * Components:
+   * - Order summary
+   * - Promo code input
+   * - Pickup details
+   * - Express checkout element
+   */
   return (
     <div className="max-w-2xl mx-auto p-4 pt-32 space-y-6">
       <h1 className="font-recoleta text-3xl mb-6">Checkout</h1>
       
-      {orderDetails && (
-        <>
-          <OrderSummary orderDetails={orderDetails} />
-          
-          <PickupDetails
-            location={{
-              name: orderDetails.pickupLocation || '',
-              address: '', // Add these to OrderDetails if needed
-              city: '',
-              zip: ''
-            }}
-            pickupTime={orderDetails.pickupTime || ''}
-          />
-          
-          {/* 
-            Elements provider wraps ExpressCheckout
-            - Provides stripe instance and elements context
-            - Configures payment flow with mode, amount, currency
-          */}
-          <Elements stripe={stripePromise} options={options}>
-            <ExpressCheckout 
-              orderDetails={orderDetails}
-              onError={setError}
-            />
-          </Elements>
-        </>
-      )}
+      {/* Display order summary with items and totals */}
+      <OrderSummary orderDetails={orderDetails} />
       
-      {/* Error and loading states */}
+      {/* Promo code section */}
+      <div className="mb-6">
+        <h2 className="text-lg font-medium mb-2">Promo Code</h2>
+        <PromoCode 
+          subtotal={orderDetails.subtotal}
+          onApplyPromo={handlePromoCode}
+        />
+      </div>
+      
+      {/* Pickup location and time details */}
+      <PickupDetails
+        location={{
+          name: orderDetails.pickupLocation || '',
+          address: '',
+          city: '',
+          zip: ''
+        }}
+        pickupTime={orderDetails.pickupTime || ''}
+      />
+      
+      {/* Mount ExpressCheckoutElement directly here */}
+      <ExpressCheckoutElement
+        onConfirm={handleConfirm}
+        onClick={handleClick}
+      />
+      
       {error && (
-        <p className="text-red-500 text-center">{error}</p>
+        <div className="mt-4 text-red-500 text-center">{error}</div>
       )}
     </div>
   )
 }
 
+/**
+ * Checkout Page Wrapper
+ * Provides error boundary and loading state
+ */
 export default function Checkout() {
+  // Initialize with a minimum amount to avoid the error
+  const [options, setOptions] = useState<StripeElementsOptions>({
+    mode: 'payment',
+    amount: 100, // Set minimum amount (100 cents = $1.00)
+    currency: 'usd',
+    appearance: STRIPE_APPEARANCE,
+  })
+
   return (
     <ErrorBoundary
       fallback={<div>Something went wrong loading checkout</div>}
       onError={(error) => console.error('Checkout error:', error)}
     >
-      <Suspense fallback={<div>Loading...</div>}>
-        <CheckoutContent />
-      </Suspense>
+      <Elements stripe={stripePromise} options={options}>
+        <Suspense fallback={<div>Loading...</div>}>
+          <CheckoutContent onAmountChange={(amount) => {
+            setOptions(prev => ({ ...prev, amount }))
+          }} />
+        </Suspense>
+      </Elements>
     </ErrorBoundary>
   )
 }
+

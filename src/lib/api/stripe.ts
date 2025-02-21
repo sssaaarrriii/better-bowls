@@ -2,20 +2,37 @@
 
 import Stripe from 'stripe'
 
+// Server-side only validation with better error handling
+const createStripeClient = () => {
+  if (typeof process === 'undefined') {
+    throw new Error('This should only be called on the server side')
+  }
+
+  const key = process.env.STRIPE_SECRET_KEY
+  if (!key) {
+    console.error('⚠️ STRIPE_SECRET_KEY is missing')
+    // Return a dummy client that will throw clear errors when used
+    return new Stripe('dummy_key', {
+      apiVersion: '2022-11-15',
+    })
+  }
+
+  return new Stripe(key, {
+    apiVersion: '2022-11-15',
+    typescript: true,
+  })
+}
+
+// Export the stripe client
+export const stripe = createStripeClient()
+
 // Server-side only validation
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is not set')
+if (typeof process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY !== 'string') {
+  throw new Error(
+    'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY must be defined in environment variables. ' +
+    'Check your .env.local file.'
+  )
 }
-
-if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
-  throw new Error('Missing NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY')
-}
-
-// Initialize Stripe with correct API version
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2022-11-15',
-  typescript: true,
-})
 
 // Type for consistent payment error handling
 export interface PaymentError {
@@ -51,22 +68,25 @@ export interface OrderDetails {
   pickupTime?: string
 }
 
-// Helper function to validate order amounts
+// Add better validation
 export const validateOrderAmounts = (orderDetails: OrderDetails): boolean => {
-  const { subtotal, discount, tax, total } = orderDetails
+  const { subtotal, discount = 0, tax, total } = orderDetails
   
   // Ensure all amounts are non-negative
   if (subtotal < 0 || discount < 0 || tax < 0 || total < 0) {
     return false
   }
   
-  // Validate total calculation
+  // Validate total matches calculation
   const calculatedTotal = subtotal - discount + tax
-  return Math.abs(calculatedTotal - total) < 0.01 // Account for floating point math
+  return Math.abs(calculatedTotal - total) < 0.01 // Account for floating point
+
+  // Ensure minimum amount for Stripe
+  return total * 100 >= 50 // Minimum 50 cents
 }
 
-// Helper to format amount for Stripe (converts dollars to cents)
-export const formatAmountForStripe = (amount: number): number => {
+// Add helper for amount formatting
+export const formatStripeAmount = (amount: number): number => {
   return Math.round(amount * 100)
 }
 
