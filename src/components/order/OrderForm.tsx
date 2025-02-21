@@ -79,6 +79,8 @@ export default function OrderForm({ onSubmit, isSubmitting }: OrderFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (isFormValid && !isSubmitting) {
+      // Save customer info to localStorage
+      localStorage.setItem('customerInfo', JSON.stringify(formData))
       onSubmit(formData)
     }
   }

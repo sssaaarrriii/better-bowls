@@ -18,6 +18,20 @@ const mulish = Mulish({
 // Note: You'll need to either load Myriad and Baskerville similarly,
 // or use fallback system fonts
 
+/**
+ * Root Layout Component
+ * 
+ * The main layout wrapper for the entire application.
+ * Handles:
+ * - Font loading (Recoleta, Mulish)
+ * - Global styles
+ * - Common layout elements (Header, Footer)
+ * - HTML structure and metadata
+ * 
+ * This component wraps every page in the application and provides
+ * consistent styling and structure across all routes.
+ */
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${recoleta.variable} ${mulish.variable}`}>

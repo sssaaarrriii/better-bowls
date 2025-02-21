@@ -86,6 +86,7 @@ export default function ProductCustomization() {
   const handleOrder = () => {
     const totals = calculateTotals()
     const selectedEvent = JSON.parse(localStorage.getItem('selectedEvent') || '{}')
+    const customerInfo = JSON.parse(localStorage.getItem('customerInfo') || '{}')
     
     const orderDetails = {
       customerInfo,

@@ -10,6 +10,19 @@ interface PickupDetailsProps {
   pickupTime: string
 }
 
+/**
+ * Pickup Details Component
+ * 
+ * Display component for showing pickup location and time information.
+ * Purely presentational - does not handle any business logic.
+ * 
+ * Displays:
+ * - Pickup location name and address
+ * - Pickup time (calculated from class time)
+ * - Any additional pickup instructions
+ * 
+ * Note: This component only displays data passed to it via props
+ */
 export default function PickupDetails({ location, pickupTime }: PickupDetailsProps) {
   const selectedEvent = typeof window !== 'undefined' 
     ? JSON.parse(localStorage.getItem('selectedEvent') || '{}')

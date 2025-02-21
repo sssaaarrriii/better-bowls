@@ -12,6 +12,27 @@ import { OrderDetails, STRIPE_APPEARANCE } from '@/lib/api/stripe'
 import { ErrorBoundary } from 'react-error-boundary'
 
 /**
+ * Checkout Page Component
+ * 
+ * Main checkout flow coordinator that handles:
+ * 1. Loading stored order data from localStorage
+ * 2. Stripe Elements initialization and configuration
+ * 3. Payment processing
+ * 4. Order validation
+ * 
+ * Contains:
+ * - Order summary display
+ * - Promo code application
+ * - Pickup details
+ * - Express checkout integration
+ * 
+ * Uses child components:
+ * - OrderSummary: Displays order details
+ * - PromoCode: Handles discount application
+ * - PickupDetails: Shows pickup information
+ */
+
+/**
  * Checkout Page Flow:
  * 1. Initialize Stripe on page load
  * 2. Load order details from localStorage
@@ -34,23 +55,15 @@ function CheckoutContent({ onAmountChange }: { onAmountChange: (amount: number) 
   const router = useRouter()
   const [error, setError] = useState<string>('')
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null)
+  const [clientSecret, setClientSecret] = useState<string>('')
 
-  /**
-   * Load and validate stored order data on mount
-   * Data sources:
-   * - selectedEvent: Event details (location, time)
-   * - currentOrder: Order items and amounts
-   * - customerInfo: Customer contact details
-   */
+  // Load order data only once on mount
   useEffect(() => {
-    const loadOrderData = () => {
+    const loadOrderData = async () => {
       try {
-        console.log('Loading order data...')
         const event = JSON.parse(localStorage.getItem('selectedEvent') || '')
         const order = JSON.parse(localStorage.getItem('currentOrder') || '')
         const customer = JSON.parse(localStorage.getItem('customerInfo') || '')
-
-        console.log('Loaded data:', { event, order, customer })
 
         if (!event.location || !customer.phone || !order.items?.length) {
           throw new Error('Invalid order data')
@@ -63,11 +76,7 @@ function CheckoutContent({ onAmountChange }: { onAmountChange: (amount: number) 
           pickupTime: customer.classTime || event.time
         }
 
-        console.log('Calculated details:', details)
-        console.log('Total amount:', Math.round(details.total * 100))
-
         setOrderDetails(details)
-        onAmountChange(Math.round(details.total * 100))
       } catch (error) {
         console.error('Data validation error:', error)
         router.push('/order')
@@ -75,7 +84,34 @@ function CheckoutContent({ onAmountChange }: { onAmountChange: (amount: number) 
     }
 
     loadOrderData()
-  }, [router, onAmountChange])
+  }, [router]) // Remove onAmountChange from dependencies
+
+  // Create/update payment intent when orderDetails changes
+  useEffect(() => {
+    const createPaymentIntent = async () => {
+      if (!orderDetails) return
+
+      try {
+        const response = await fetch('/api/checkout/create-payment-intent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: Math.round(orderDetails.total * 100),
+            orderItems: orderDetails.items,
+            customerInfo: orderDetails.customerInfo
+          })
+        })
+        const { clientSecret } = await response.json()
+        setClientSecret(clientSecret)
+        onAmountChange(Math.round(orderDetails.total * 100))
+      } catch (error) {
+        console.error('Payment intent error:', error)
+        setError('Payment setup failed')
+      }
+    }
+
+    createPaymentIntent()
+  }, [orderDetails]) // Only run when orderDetails changes
 
   /**
    * Handle promo code application
@@ -83,15 +119,38 @@ function CheckoutContent({ onAmountChange }: { onAmountChange: (amount: number) 
    */
   const handlePromoCode = async (discount: number, code: string) => {
     if (!orderDetails) return
+    
+    // Calculate new totals
+    const subtotal = orderDetails.subtotal
+    const discountedSubtotal = Math.round((subtotal - discount) * 100) / 100
+    const tax = Math.round((discountedSubtotal * 0.095) * 100) / 100
+    const total = Math.round((discountedSubtotal + tax) * 100) / 100
+
     const newDetails = {
       ...orderDetails,
       discount,
       promoCode: code,
-      total: orderDetails.subtotal - discount + orderDetails.tax
+      tax,
+      total
     }
+
+    // Update state and localStorage
     setOrderDetails(newDetails)
-    // Update amount when promo code is applied
-    onAmountChange(Math.round(newDetails.total * 100))
+    localStorage.setItem('currentOrder', JSON.stringify(newDetails))
+
+    // Create new payment intent with discounted amount
+    const response = await fetch('/api/checkout/create-payment-intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        amount: Math.round(total * 100),
+        orderItems: newDetails.items,
+        customerInfo: newDetails.customerInfo
+      })
+    })
+    const { clientSecret } = await response.json()
+    setClientSecret(clientSecret)
+    onAmountChange(Math.round(total * 100))
   }
 
   // Handle the click event for Express Checkout
@@ -107,11 +166,9 @@ function CheckoutContent({ onAmountChange }: { onAmountChange: (amount: number) 
     })
   }
 
-  // Handle the confirmation flow
+  // Use stored clientSecret for confirmation
   const handleConfirm = async () => {
-    if (!stripe || !elements || !orderDetails) {
-      return
-    }
+    if (!stripe || !elements || !clientSecret) return
 
     try {
       const { error: submitError } = await elements.submit()
@@ -120,24 +177,6 @@ function CheckoutContent({ onAmountChange }: { onAmountChange: (amount: number) 
         return
       }
 
-      // Create PaymentIntent on the server
-      const response = await fetch('/api/checkout/create-payment-intent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: Math.round(orderDetails.total * 100),
-          orderItems: orderDetails.items,
-          customerInfo: orderDetails.customerInfo
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to create payment')
-      }
-
-      const { clientSecret } = await response.json()
-
-      // Confirm the payment with Stripe
       const { error } = await stripe.confirmPayment({
         elements,
         clientSecret,
@@ -149,7 +188,6 @@ function CheckoutContent({ onAmountChange }: { onAmountChange: (amount: number) 
       if (error) {
         setError(error.message || 'Payment confirmation failed')
       }
-      // Success case is handled by redirect
     } catch (error) {
       console.error('Payment error:', error)
       setError('Payment processing failed')
