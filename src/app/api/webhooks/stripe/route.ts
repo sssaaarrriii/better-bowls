@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { stripe, PaymentError } from '@/lib/api/stripe'
+import { stripe } from '@/lib/api/stripe'
 import type Stripe from 'stripe'
 
 // Validate webhook secret at startup
@@ -11,6 +11,7 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
 export async function POST(req: Request) {
   try {
+    // Get the raw request body and Stripe signature header
     const body = await req.text()
     const signature = req.headers.get('stripe-signature')
 
@@ -21,17 +22,18 @@ export async function POST(req: Request) {
       )
     }
 
-    // Verify webhook
+    // Verify the webhook signature using Stripe's library
     const event = stripe.webhooks.constructEvent(
       body,
       signature,
       webhookSecret
     ) as Stripe.Event
 
-    // Handle events
+    // Handle different types of Stripe events
     switch (event.type) {
       case 'payment_intent.succeeded': {
         const paymentIntent = event.data.object as Stripe.PaymentIntent
+        // Payment successful - process order fulfillment
         console.log('💰 Payment succeeded:', {
           id: paymentIntent.id,
           amount: paymentIntent.amount,
@@ -42,6 +44,7 @@ export async function POST(req: Request) {
 
       case 'payment_intent.payment_failed': {
         const paymentIntent = event.data.object as Stripe.PaymentIntent
+        // Payment failed - handle failure
         console.error('❌ Payment failed:', {
           id: paymentIntent.id,
           error: paymentIntent.last_payment_error

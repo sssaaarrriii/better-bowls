@@ -2,16 +2,16 @@
 
 import Stripe from 'stripe'
 
-// Validate environment variables at startup
+// Server-side only validation
 if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('Missing STRIPE_SECRET_KEY environment variable')
+  throw new Error('STRIPE_SECRET_KEY is not set')
 }
 
 if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
-  throw new Error('Missing NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY environment variable')
+  throw new Error('Missing NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY')
 }
 
-// Initialize single Stripe instance with correct API version
+// Initialize Stripe with correct API version
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2022-11-15',
   typescript: true,

@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import { 
-  stripe, 
   OrderDetails, 
   validateOrderAmounts, 
   formatAmountForStripe 
 } from '@/lib/api/stripe'
+import { stripe } from '@/lib/api/stripe'
 
 // Define expected request body type
 interface CreatePaymentIntentRequest {
@@ -13,10 +13,11 @@ interface CreatePaymentIntentRequest {
 
 export async function POST(req: Request) {
   try {
+    // Parse the incoming request body
     const body = await req.json()
     const { orderDetails } = body as { orderDetails: OrderDetails }
 
-    // Validate order details
+    // Validate the order amounts are correct
     if (!validateOrderAmounts(orderDetails)) {
       return NextResponse.json(
         { error: 'Invalid order amounts' },
@@ -24,23 +25,25 @@ export async function POST(req: Request) {
       )
     }
 
-    // Calculate final amount
+    // Convert dollar amounts to cents for Stripe
     const subtotalAmount = formatAmountForStripe(orderDetails.subtotal)
     const discountAmount = formatAmountForStripe(orderDetails.discount)
     const taxAmount = formatAmountForStripe(orderDetails.tax)
+    
+    // Calculate final amount, ensuring minimum of 50 cents
     const finalAmount = Math.max(
       subtotalAmount - discountAmount + taxAmount,
-      50 // Minimum 50 cents
+      50
     )
 
-    // Create PaymentIntent
+    // Create a PaymentIntent with Stripe
     const paymentIntent = await stripe.paymentIntents.create({
       amount: finalAmount,
       currency: 'usd',
-      // Enable automatic payment methods
       automatic_payment_methods: {
-        enabled: true
+        enabled: true // Enables payment methods like Apple Pay
       },
+      // Store order details in metadata for webhook processing
       metadata: {
         customerName: orderDetails.customerInfo.name,
         customerPhone: orderDetails.customerInfo.phone,
@@ -50,6 +53,7 @@ export async function POST(req: Request) {
       }
     })
 
+    // Return the client secret to the frontend
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret
     })

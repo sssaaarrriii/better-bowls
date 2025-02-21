@@ -9,6 +9,7 @@ import OrderSummary from '@/components/checkout/order-summary'
 import PickupDetails from '@/components/checkout/pickup-details'
 import ExpressCheckout from '@/components/checkout/ExpressCheckout'
 import { OrderDetails, STRIPE_APPEARANCE } from '@/lib/api/stripe'
+import { ErrorBoundary } from 'react-error-boundary'
 
 /**
  * Checkout Flow:
@@ -21,9 +22,10 @@ import { OrderDetails, STRIPE_APPEARANCE } from '@/lib/api/stripe'
  *    - Handles confirmation and redirect
  */
 
-// Initialize Stripe outside component to prevent recreation
-// This instance is used by Elements provider below
+// Add debug logging
+console.log('Stripe Key:', !!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+console.log('Stripe Promise:', !!stripePromise)
 
 function CheckoutContent() {
   const router = useRouter()
@@ -38,9 +40,18 @@ function CheckoutContent() {
    * - Order customization: Order items and amounts
    */
   useEffect(() => {
+    // Add debug logging
+    console.log('CheckoutContent mounted')
+    
     const validateStoredData = () => {
       try {
-        // Get all required data from localStorage
+        // Log localStorage contents
+        console.log('localStorage data:', {
+          event: localStorage.getItem('selectedEvent'),
+          order: localStorage.getItem('currentOrder'),
+          customer: localStorage.getItem('customerInfo')
+        })
+
         const storedEvent = localStorage.getItem('selectedEvent')
         const storedOrder = localStorage.getItem('currentOrder')
         const customerInfo = localStorage.getItem('customerInfo')
@@ -49,17 +60,17 @@ function CheckoutContent() {
           throw new Error('Missing required order data')
         }
 
-        // Parse and validate data
+        // Parse and validate
         const event = JSON.parse(storedEvent)
         const order = JSON.parse(storedOrder)
         const customer = JSON.parse(customerInfo)
 
-        // Validate required fields before allowing checkout
+        console.log('Parsed data:', { event, order, customer })
+
         if (!event.location || !customer.phone || !order.items?.length) {
           throw new Error('Invalid order data')
         }
 
-        // Combine data into OrderDetails type from @/lib/api/stripe
         setOrderDetails({
           ...order,
           customerInfo: customer,
@@ -67,13 +78,16 @@ function CheckoutContent() {
           pickupTime: customer.classTime || event.time
         })
       } catch (error) {
-        console.error('Error loading order data:', error)
-        router.push('/order') // Return to order page if validation fails
+        console.error('Validation error:', error)
+        router.push('/order')
       }
     }
 
     validateStoredData()
   }, [router])
+
+  // Log render
+  console.log('Rendering with orderDetails:', !!orderDetails)
 
   /**
    * Configure Stripe Elements options
@@ -129,8 +143,13 @@ function CheckoutContent() {
 
 export default function Checkout() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <CheckoutContent />
-    </Suspense>
+    <ErrorBoundary
+      fallback={<div>Something went wrong loading checkout</div>}
+      onError={(error) => console.error('Checkout error:', error)}
+    >
+      <Suspense fallback={<div>Loading...</div>}>
+        <CheckoutContent />
+      </Suspense>
+    </ErrorBoundary>
   )
 }

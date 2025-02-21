@@ -21,3 +21,8 @@ pages/about.tsx → /about
 Use kebab-case for Static Files ✅
 public/images/homepage-banner.jpg
 public/styles/global.css
+
+✅ Best for: Modern Next.js projects using ES Modules.
+📌 Syntax: Uses ESM (ES Modules) with export default.
+
+Use official Stripe version apiVersion: '2022-11-15'
